@@ -8,7 +8,7 @@ les pages**.
 |---|---|
 | Cours | Développement Front |
 | Binôme | `__NOM1 Prénom1__` · `__NOM2 Prénom2__` |
-| Dépôt | `<URL du dépôt privé>` |
+| Dépôt | https://github.com/wenkais196-Gabriel/mini-projet-site-commercial (privé) |
 | Remise Moodle | `Nom1-Prenom1_Nom2-Prenom2.zip` |
 
 > Avant de coder : lire **[AGENTS.md](AGENTS.md)** (contraintes non négociables).
