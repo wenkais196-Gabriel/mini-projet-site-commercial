@@ -1,0 +1,13 @@
+# Normalise les fins de ligne.
+# Sans ce fichier, un binôme Windows (CRLF) + un binôme macOS/Linux (LF)
+# produit des diffs où TOUT le fichier est modifié → relecture de PR impossible.
+* text=auto eol=lf
+
+# Binaires : aucune conversion
+*.png binary
+*.jpg binary
+*.pdf binary
+
+# Sources et rendus des diagrammes
+*.puml text eol=lf
+*.svg text eol=lf

@@ -1,0 +1,22 @@
+# Dépendances — JAMAIS commitées (exigence explicite du sujet : zip sans node_modules)
+node_modules/
+
+# Build
+dist/
+dist-ssr/
+*.local
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# Fichiers de travail locaux (à ne pas pousser)
+*.tmp
+scratch/

@@ -1,0 +1,65 @@
+@startuml 01-diagramme-composants
+title Site commercial  -  diagramme de composants
+
+skinparam componentStyle uml2
+skinparam shadowing false
+skinparam defaultFontName Segoe UI
+skinparam packageStyle rectangle
+skinparam ArrowColor #44546A
+skinparam ArrowFontSize 12
+skinparam nodesep 20
+skinparam ranksep 50
+
+package "src/pages" #E8F5E9 {
+  component "AccueilPage" as Accueil
+  component "ProduitsPage" as Produits
+  component "CommandePage" as Commande
+}
+
+package "src/components" #EAF1F8 {
+  component "Layout\n(gabarit des 3 pages)" as Layout
+  component "CarteKPI" as KPI
+  component "FiltreProduits" as Filtre
+  component "TableProduits" as Table
+  component "RowProduct" as Row
+  component "LigneCommande" as Ligne
+  component "SelecteurQuantite" as SelQ
+}
+
+package "src/store" #FFF4E5 {
+  component "DataContext.jsx" as Store <<etat partage>>
+  component "selecteurs.js" as Sel <<fonctions pures>>
+}
+
+package "src/data" #F4F6F8 {
+  component "seed.js" as Seed <<donnees en dur>>
+}
+
+Accueil --> Store : useData()
+Produits --> Store : useData()
+Commande --> Store : useData()\nvaliderCommande()
+Layout --> Store : statistiques
+
+Accueil --> KPI
+Produits --> Filtre
+Produits --> Table
+Table --> Row : produit
+Commande --> Ligne : produit, quantite
+Ligne --> SelQ : valeur, max
+
+Store --> Sel : regles de calcul
+Store --> Seed : donnees de depart
+
+note bottom of Sel
+  Utilise par TableProduits (regroupement),
+  RowProduct (estEnAlerte) et LigneCommande
+  (formaterPrix) — jamais l'inverse.
+end note
+
+note bottom of Store
+  Instance unique pour toute l'application.
+  Aucun composant ne lit seed.js directement :
+  passer une commande modifie les 3 pages.
+end note
+
+@enduml

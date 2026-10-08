@@ -1,0 +1,53 @@
+@startuml 03-sequence-commande
+title Passer une commande  -  et l'effet sur les deux autres pages
+
+skinparam shadowing false
+skinparam defaultFontName Segoe UI
+skinparam ArrowColor #44546A
+autonumber
+
+actor "Utilisateur" as U
+participant "CommandePage\n(etat local)" as P
+participant "DataProvider\n(etat partage)" as S
+participant "selecteurs.js\n(fonctions pures)" as Sel
+participant "Layout\n(barre de navigation)" as L
+participant "ProduitsPage" as Pr
+participant "AccueilPage" as A
+
+U -> P : choisit un produit et une quantite
+P -> P : setQuantites(...)  bornage 0..stock
+P -> P : total recalcule (donnee derivee)
+
+U -> P : clique sur Valider la commande
+P -> S : validerCommande({ nom, prenom, email, lignes })
+S -> Sel : validerCommande(produits, formulaire)
+Sel --> S : { valide, erreurs, erreursParProduit }
+
+alt commande invalide
+  S --> P : rapport d'erreurs
+  P --> U : messages d'erreur (stock insuffisant, mail...)
+else commande valide
+  S -> S : appliquerCommande()  transition pure
+  note right of S
+    decremente le stock des produits commandes
+    puis ajoute la commande a l'historique
+  end note
+  S --> P : { commande C004 }
+  P --> U : confirmation, formulaire reinitialise
+end
+
+note over S, A
+  Notification des abonnes (Observer) :
+  aucune page ne previent les autres, elles
+  observent le meme etat partage.
+end note
+
+S --> L : nouvel etat
+L -> L : compteur de commandes a jour
+S --> Pr : nouvel etat
+Pr -> Pr : un produit passe sous son seuil
+Pr -> Pr : la ligne devient surlignee
+S --> A : nouvel etat
+A -> A : indicateurs recalcules
+
+@enduml

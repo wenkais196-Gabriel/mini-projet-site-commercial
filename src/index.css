@@ -1,0 +1,70 @@
+/* =============================================================================
+   index.css — vocabulaire visuel PARTAGÉ par les 3 pages.
+   Règle : tout le reste passe par les classes utilitaires Bootstrap.
+   On ne crée une classe ici que si elle décrit un ÉTAT MÉTIER (alerte, rupture)
+   que les pages Produits ET Commande doivent afficher de la même façon.
+   ========================================================================== */
+
+:root {
+  --couleur-primaire: #1f4e79;
+  --couleur-alerte: #b45309;
+  --couleur-rupture: #b91c1c;
+  --couleur-succes: #15803d;
+  --rayon: 0.5rem;
+}
+
+body {
+  background-color: #f6f7f9;
+}
+
+/* --- Indicateurs (page Accueil) ---------------------------------------- */
+.kpi {
+  border: 0;
+  border-radius: var(--rayon);
+}
+
+.kpi .kpi-libelle {
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.kpi .kpi-valeur {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* --- États métier partagés Produits / Commande ------------------------- */
+/* Quantité ≤ seuil : une seule définition, réutilisée partout. */
+.ligne-alerte > td {
+  background-color: #fff7ed;
+}
+
+.badge-alerte {
+  background-color: var(--couleur-alerte);
+  color: #fff;
+}
+
+.badge-rupture {
+  background-color: var(--couleur-rupture);
+  color: #fff;
+}
+
+/* --- Mise en page ------------------------------------------------------ */
+.entete-page {
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+}
+
+.entete-page h1 {
+  font-size: 1.5rem;
+  margin-bottom: 0.15rem;
+}
+
+.entete-page .sous-titre {
+  color: #6b7280;
+  font-size: 0.9rem;
+}

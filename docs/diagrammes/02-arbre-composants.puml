@@ -1,0 +1,58 @@
+@startuml 02-arbre-composants
+title Site commercial  -  arbre des composants (props reelles)
+
+skinparam shadowing false
+skinparam defaultFontName Segoe UI
+skinparam ArrowColor #44546A
+
+rectangle "App  (cabliage)" as App {
+}
+
+card "DataProvider\n{ produits, commandes, statistiques }" as Store {
+}
+
+card "Layout\nstatistiques.nbCommandes = 3" as Layout {
+}
+
+card "AccueilPage\netat : aucun" as Accueil {
+  card "CarteKPI x4\n{ libelle, valeur, variante }" as K1
+  card "table synthese\n{ parCategorie[] }" as K2
+}
+
+card "ProduitsPage\netat : filtres" as Produits {
+  card "FiltreProduits\n{ valeurs, bornes, categories, nbResultats, nbTotal,\n  onChange, onReinitialiser }" as F
+  card "TableProduits\n{ produits: 13 filtres }" as T {
+    card "RowProduct\n{ produit }" as R
+  }
+}
+
+card "CommandePage\netat : client, quantites, rapport" as Commande {
+  card "LigneCommande\n{ produit, quantite, onQuantiteChange, erreur }" as L {
+    card "SelecteurQuantite\n{ valeur, max = stock, onChange }" as S
+  }
+}
+
+App --> Store
+Store --> Layout
+Layout --> Accueil
+Layout --> Produits
+Layout --> Commande
+Accueil --> K1
+Accueil --> K2
+Produits --> F
+Produits --> T
+T --> R
+Commande --> L
+L --> S
+
+note right of Store
+  Etat unique : les 3 pages
+  lisent la MEME version des donnees.
+end note
+
+note bottom of R
+  Aucun etat local dans les composants
+  de presentation : tout vient des props.
+end note
+
+@enduml
