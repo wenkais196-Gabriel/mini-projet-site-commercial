@@ -5,7 +5,7 @@
  * filtres et remonte chaque modification. C'est le même schéma que la SearchBar de
  * l'exercice 4, étendu aux 5 attributs du produit.
  *
- * TODO (responsable : __) — améliorations attendues :
+ * TODO (responsable : SUI Wenhui) — améliorations attendues :
  *   - extraire les 3 petits composants réutilisables du cours (InputFiltre,
  *     CheckboxFiltre, RangeFiltre) et les réutiliser ici ET dans la page Commande ;
  *   - ajouter un bouton « Effacer les filtres » et un compteur de résultats ;

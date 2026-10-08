@@ -7,9 +7,9 @@ les pages**.
 | | |
 |---|---|
 | Cours | Développement Front |
-| Binôme | `__NOM1 Prénom1__` · `__NOM2 Prénom2__` |
-| Dépôt | https://github.com/wenkais196-Gabriel/mini-projet-site-commercial (privé) |
-| Remise Moodle | `Nom1-Prenom1_Nom2-Prenom2.zip` |
+| Binôme | SONG Wenkai (A) · SUI Wenhui (B) |
+| Dépôt | https://github.com/wenkais196-Gabriel/mini-projet-site-commercial (public) |
+| Remise Moodle | `SONG-Wenkai_SUI-Wenhui.zip` |
 
 > Avant de coder : lire **[AGENTS.md](AGENTS.md)** (contraintes non négociables).
 > Le compte-rendu à rendre est dans **[docs/analyse-design-patterns.md](docs/analyse-design-patterns.md)**.
@@ -107,8 +107,8 @@ annoncée avant d'être codée, sinon le binôme travaille sur deux versions dif
 
 | Qui | Périmètre | Fichiers |
 |---|---|---|
-| **A — `__NOM1__`** | Commande, architecture, compte-rendu | `pages/CommandePage.jsx`, `components/commande/**`, `store/**`, `docs/**` |
-| **B — `__NOM2__`** | Accueil, Produits, données | `pages/AccueilPage.jsx`, `pages/ProduitsPage.jsx`, `components/produits/**`, `components/indicateurs/**`, `data/seed.js` |
+| **A — SONG Wenkai** | Commande, architecture, compte-rendu | `pages/CommandePage.jsx`, `components/commande/**`, `store/**`, `docs/**` |
+| **B — SUI Wenhui** | Accueil, Produits, données | `pages/AccueilPage.jsx`, `pages/ProduitsPage.jsx`, `components/produits/**`, `components/indicateurs/**`, `data/seed.js` |
 
 Chacun ne modifie que ses fichiers. `src/store/` n'est modifié que par A — si B a
 besoin d'un nouveau calcul, il le demande (ou l'ajoute dans `selecteurs.js` après
@@ -148,7 +148,7 @@ Le dossier `node_modules` ne doit **pas** figurer dans le zip. Comme il n'est pa
 versionné, la commande suivante produit exactement le bon paquet :
 
 ```bash
-git archive --format=zip -o "Nom1-Prenom1_Nom2-Prenom2.zip" HEAD
+git archive --format=zip -o "SONG-Wenkai_SUI-Wenhui.zip" HEAD
 ```
 
 Le document de remise (analyse des design patterns + diagrammes) est déjà dans

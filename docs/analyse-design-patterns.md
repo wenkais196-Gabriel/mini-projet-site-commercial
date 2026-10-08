@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Binôme | `__NOM1 Prénom1__` · `__NOM2 Prénom2__` |
+| Binôme | SONG Wenkai (A) · SUI Wenhui (B) |
 | Application | Site commercial React — 3 pages virtuelles, sans partie serveur |
 | Dépôt | https://github.com/wenkais196-Gabriel/mini-projet-site-commercial |
 | Composants | `docs/diagrammes/` |

@@ -7,7 +7,7 @@
    FiltreProduits et TableProduits ne se connaissent pas : ils ne communiquent que
    par l'intermédiaire de leur parent. C'est le « lifting state up » du cours.
 
-   TODO (responsable : __) — améliorations attendues :
+   TODO (responsable : SUI Wenhui) — améliorations attendues :
      - tri par colonne (nom, prix, quantité) ;
      - filtres sur les 5 attributs à vérifier/soigner, réutilisation des petits
        composants du cours (InputFiltre / CheckboxFiltre / RangeFiltre) ;

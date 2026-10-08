@@ -44,8 +44,8 @@ avec lui, on le signale au lieu de contourner.
 
 | Périmètre | Propriétaire |
 |---|---|
-| `src/store/**`, `docs/**`, `pages/CommandePage.jsx`, `components/commande/**` | `__NOM1__` |
-| `pages/AccueilPage.jsx`, `pages/ProduitsPage.jsx`, `components/produits/**`, `components/indicateurs/**`, `data/seed.js` | `__NOM2__` |
+| `src/store/**`, `docs/**`, `pages/CommandePage.jsx`, `components/commande/**` | SONG Wenkai |
+| `pages/AccueilPage.jsx`, `pages/ProduitsPage.jsx`, `components/produits/**`, `components/indicateurs/**`, `data/seed.js` | SUI Wenhui |
 | `package.json`, `package-lock.json`, `.oxlintrc.json`, `AGENTS.md`, `README.md` | accord des deux |
 
 ## 5. Interdits explicites
@@ -66,4 +66,4 @@ avec lui, on le signale au lieu de contourner.
 - [ ] `docs/analyse-design-patterns.md` : les 8 patterns traités (3 cas chacun)
 - [ ] `docs/diagrammes/` : diagramme(s) de composants, source `.puml` **et** rendu
 - [ ] Zip produit avec `git archive` (sans `node_modules`), nommé
-      `Nom1-Prenom1_Nom2-Prenom2.zip`
+      `SONG-Wenkai_SUI-Wenhui.zip`

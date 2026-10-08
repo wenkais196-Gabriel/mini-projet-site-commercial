@@ -4,7 +4,7 @@
    AUCUN état ni gestionnaire d'événement. Elle ne fait que LIRE les indicateurs
    dérivés du store.
 
-   TODO (responsable : __) — améliorations attendues :
+   TODO (responsable : SUI Wenhui) — améliorations attendues :
      - mettre en forme la synthèse par catégorie (barres de proportion, tri) ;
      - ajouter la liste des dernières commandes (données déjà disponibles
        dans useData().commandes) ;

@@ -12,7 +12,7 @@
    la commande. La décrémentation du stock est un effet de bord du store, pas du
    formulaire (le formulaire ne sait même pas qu'il y a un stock à décrémenter).
 
-   TODO (responsable : __) — améliorations attendues :
+   TODO (responsable : SONG Wenkai) — améliorations attendues :
      - mise en forme du formulaire (regroupement, aide à la saisie) ;
      - message de confirmation enrichi (récapitulatif de la commande passée) ;
      - éventuellement : proposer « commander à nouveau » à partir d'une commande
