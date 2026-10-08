@@ -15,7 +15,10 @@ import { CommandePage } from "./pages/CommandePage.jsx";
 export default function App() {
   return (
     <DataProvider>
-      <BrowserRouter>
+      {/* Les drapeaux `future` font taire les avertissements de migration de
+          react-router 6 (ils ne concernent pas notre code : ce sont des messages
+          de compatibilité v7). On reste bien en v6, la version du tutoriel du cours. */}
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           {/* Layout = gabarit commun (barre de navigation + <Outlet/>).
               Les 3 routes sont ses enfants : elles s'affichent « dans » le gabarit. */}
