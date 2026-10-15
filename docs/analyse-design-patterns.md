@@ -31,9 +31,9 @@ Deux séparations structurent tout le code :
 
 - **composants de présentation** (ne connaissent que leurs `props`, aucun état) vs
   **composants orchestrateurs** (les 3 pages : ce sont les seules à avoir un état) ;
-- **règles métier** dans des modules **purs** — `selecteurs.js` (calculs et
-  validation), `etat.js` (transitions), `commandeBuilder.js` (construction d'une
-  commande), `statutCommande.js` (machine à états du formulaire) — séparées de la
+- **règles métier** dans des modules **purs** — `selectors.js` (calculs et
+  validation), `state.js` (transitions), `orderBuilder.js` (construction d'une
+  commande), `orderStatus.js` (machine à états du formulaire) — séparées de la
   **colle React** (`DataContext.jsx`) et de **l'affichage** (les composants).
 
 ---
@@ -44,12 +44,13 @@ Deux séparations structurent tout le code :
 
 | Composant | Catégorie | Ce qui le rend standard / non standard |
 |---|---|---|
-| `RowProduct` | **Standard** | Une ligne de produit, aucune décision, aucun état. Réutilisé tel quel depuis l'exercice 4. |
-| `RowProduct` / `LigneCommande` | **Standard** | Présentation pure, pilotés entièrement par leurs `props`. |
-| `SelecteurQuantite` | **Standard** | Ignore le métier : affiche « une quantité bornée dans [0, max] ». Réutilisable hors du projet. |
-| `FiltreProduits` | **Non standard** | Orchestrateur : agrège 5 critères, totalement contrôlé, remonte chaque changement. |
-| `TableProduits` | **Non standard** | Composite : regroupe par catégorie et **fabrique** ses lignes (donnée dérivée calculée au rendu). |
-| `CarteKPI` | **Non standard** | À facette : `props.children` — la carte fournit le cadre, l'appelant fournit le contenu. |
+| `Input`, `Checkbox`, `Range` | **Standard** | Les trois atomes du cours (exercice 4). Ils ignorent le métier — « j'affiche une valeur, et je préviens quand elle change » — et sont réutilisés par le filtre produits **et** disponibles pour la page commande. |
+| `RowProduct` / `OrderRow` | **Standard** | Présentation pure, pilotés entièrement par leurs `props`. |
+| `QuantitySelector` | **Standard** | Ignore le métier : affiche « une quantité bornée dans [0, max] ». Réutilisable hors du projet. |
+| `ProductFilter` | **Non standard** | Orchestrateur : compose les trois atomes, agrège 5 critères, totalement contrôlé, et **un port de sortie par filtre** — exactement la structure du modèle de composants du cours. |
+| `TableProducts` | **Non standard** | Composite : regroupe par catégorie et **fabrique** ses lignes (donnée dérivée calculée au rendu). |
+| `TableCategory` | **Non standard** | Composant « structurel » : il ne connaît qu'un titre de groupe et un nombre d'éléments, jamais un produit. |
+| `KpiCard` | **Non standard** | À facette : `props.children` — la carte fournit le cadre, l'appelant fournit le contenu. |
 | `DataProvider` | **Non standard** | Composant **sans rendu visible** (non visuel) : il n'affiche rien, il fournit un état. |
 | `Layout` | **Non standard** | Gabarit de route parente : il ne sait pas quelle page il encadre (`<Outlet/>`). |
 
@@ -61,14 +62,14 @@ Deux séparations structurent tout le code :
 
 | Terme du cours (CCM) | Réalisation dans ce projet |
 |---|---|
-| composant | fonction retournant du JSX (`RowProduct`, `CarteKPI`…) |
-| attributs / propriétés | paramètres reçus par déstructuration (`{ produit }`, `{ quantite, max }`) |
-| source d'événement | `onChange`, `onClick` → **flux inverse** via les props de rappel (`onQuantiteChange`) |
+| composant | fonction retournant du JSX (`RowProduct`, `KpiCard`…) |
+| attributs / propriétés | paramètres reçus par déstructuration (`{ product }`, `{ quantity, max }`) |
+| source d'événement | `onChange`, `onClick` → **flux inverse** via les props de rappel (`onQuantityChange`) |
 | sink | composants de présentation qui produisent le DOM (`RowProduct`) |
-| facette | `props.children` de `CarteKPI` |
-| réceptacle | `SelecteurQuantite.max`, et `DataProvider` qui reçoit `dateDuJour` en prop |
+| facette | `props.children` de `KpiCard` |
+| réceptacle | `QuantitySelector.max`, et `DataProvider` qui reçoit `today` en prop |
 | configuration | le JSX de `App.jsx` : c'est le câblage de l'application |
-| état local | `useState` dans les 3 pages uniquement (`filtres`, `client`, `quantites`) |
+| état local | `useState` dans les 3 pages uniquement (`filters`, `customer`, `quantities`) |
 
 ### 2.3 Diagrammes
 
@@ -89,11 +90,11 @@ Deux séparations structurent tout le code :
 | **MVC** | Présence partielle — version classique **incompatible** | Modèle = `store` + `selecteurs` ; Vue = composants ; Contrôleur = pages et gestionnaires d'événements | — |
 | **Singleton** | **Présent** (sous une forme adaptée à React) | `DataProvider` + `useData()` : un seul état partagé, un seul point d'accès | — |
 | **Abstract Factory** | **Incompatible en l'état** (compatible si on introduit des familles) | Fabrique de lignes/labels par famille de produits | élevé |
-| **Builder** | **Présent** | `src/store/commandeBuilder.js` — `CommandeBuilder` | fait |
+| **Builder** | **Présent** | `src/store/orderBuilder.js` — `OrderBuilder` | fait |
 | **Decorator** | Compatible, non implémenté — immédiat | HOC `avecSurlignage(Ligne)` ou fonction de formatage | faible |
-| **Command** | **Présent** | `src/store/etat.js` — objets-opérations + `annulerOperation` | fait |
+| **Command** | **Présent** | `src/store/state.js` — objets-opérations + `undoOperation` | fait |
 | **Observer** | **Présent** (assuré par React) | Abonnement des composants à l'état partagé | — |
-| **State** | **Présent** | `src/store/statutCommande.js` — `TRANSITIONS` + `transitionner` | fait |
+| **State** | **Présent** | `src/store/orderStatus.js` — `TRANSITIONS` + `transition` | fait |
 
 ### 3.2 MVC
 
@@ -166,36 +167,36 @@ données (donc les 3 pages et le store), à la veille de la remise.
 
 ### 3.5 Builder
 
-**Verdict — présent.** Implémenté dans `src/store/commandeBuilder.js` et utilisé par
-`CommandePage`.
+**Verdict — présent.** Implémenté dans `src/store/orderBuilder.js` et utilisé par
+`OrderPage`.
 
 *Ce que le Builder apporte ici.* Le sujet impose un formulaire qui doit « respecter
 les contraintes de quantité disponible ». Ces contraintes sont désormais écrites à un
 seul endroit, et la page ne manipule plus un objet en cours d'assemblage :
 
 ```js
-const commande = new CommandeBuilder(produits)
-  .setClient({ nom, prenom, email })
-  .ajouterLigne("P10", 12)     // refusée et signalée si le stock est insuffisant
-  .ajouterLigne("P01", 3)
-  .build();                    // → { valide, formulaire, lignes, erreurs, erreursParProduit }
+const commande = new OrderBuilder(produits)
+  .setCustomer({ lastName, firstName, email })
+  .addLine("P10", 12)          // refusée et signalée si le stock est insuffisant
+  .addLine("P01", 3)
+  .build();                    // → { valid, form, lines, errors, errorsByProduct }
 ```
 
 Deux niveaux de contrôle, volontairement :
 
-- `ajouterLigne` refuse **tout de suite** une ligne impossible (produit inconnu,
+- `addLine` refuse **tout de suite** une ligne impossible (produit inconnu,
   quantité non entière ou ≤ 0, stock insuffisant — en tenant compte des lignes déjà
   ajoutées) ; la ligne fautive n'entre jamais dans la commande ;
 - `build()` délègue le jugement final au validateur : **le Builder assemble, le
   validateur juge**. Une seule définition des règles, jamais deux.
 
-`build()` ne déclare `valide` que sous deux conditions : les règles générales passent
+`build()` ne déclare `valid` que sous deux conditions : les règles générales passent
 **et** aucune ligne n'a été refusée en chemin — sinon on produirait une commande
 silencieusement différente de celle demandée.
 
 *Coût réel.* Une classe d'une centaine de lignes, la réécriture du `onSubmit` de
-`CommandePage`, et 14 tests dans `test/commandeBuilder.test.js` (refus, cumul des
-lignes, copies défensives, contrôle final).
+`OrderPage`, et 14 tests dans `test/orderBuilder.test.js` (refus, cumul des lignes,
+copies défensives, contrôle final).
 
 ### 3.6 Decorator
 
@@ -236,7 +237,7 @@ choisi de **ne pas** décorer `RowProduct` dans la version actuelle.
 
 ### 3.7 Command
 
-**Verdict — présent.** Implémenté dans `src/store/etat.js`, exposé par le store et
+**Verdict — présent.** Implémenté dans `src/store/state.js`, exposé par le store et
 déclenché par le bouton « Annuler » de la barre de navigation.
 
 *Où c'est déjà présent.* Le store reçoit des objets de la forme :
@@ -299,7 +300,7 @@ fournit déjà — donc un gain pédagogique contre une perte de simplicité.
 
 ### 3.9 State
 
-**Verdict — présent.** Implémenté dans `src/store/statutCommande.js` et piloté par la
+**Verdict — présent.** Implémenté dans `src/store/orderStatus.js` et piloté par la
 page Commande.
 
 *Où l'on en était, et ce qui reste vrai.* L'état de **santé d'un produit** est

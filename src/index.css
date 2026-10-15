@@ -1,70 +1,70 @@
 /* =============================================================================
-   index.css — vocabulaire visuel PARTAGÉ par les 3 pages.
-   Règle : tout le reste passe par les classes utilitaires Bootstrap.
-   On ne crée une classe ici que si elle décrit un ÉTAT MÉTIER (alerte, rupture)
-   que les pages Produits ET Commande doivent afficher de la même façon.
+   index.css — visual vocabulary SHARED by the 3 pages.
+   Rule: everything else goes through Bootstrap utility classes. A class is created
+   here only when it describes a BUSINESS STATE (alert, out of stock) that the
+   Products AND Order pages must display identically.
    ========================================================================== */
 
 :root {
-  --couleur-primaire: #1f4e79;
-  --couleur-alerte: #b45309;
-  --couleur-rupture: #b91c1c;
-  --couleur-succes: #15803d;
-  --rayon: 0.5rem;
+  --primary-color: #1f4e79;
+  --alert-color: #b45309;
+  --out-of-stock-color: #b91c1c;
+  --success-color: #15803d;
+  --radius: 0.5rem;
 }
 
 body {
   background-color: #f6f7f9;
 }
 
-/* --- Indicateurs (page Accueil) ---------------------------------------- */
+/* --- Indicators (Home page) -------------------------------------------- */
 .kpi {
   border: 0;
-  border-radius: var(--rayon);
+  border-radius: var(--radius);
 }
 
-.kpi .kpi-libelle {
+.kpi .kpi-label {
   font-size: 0.78rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #6b7280;
 }
 
-.kpi .kpi-valeur {
+.kpi .kpi-value {
   font-size: 2rem;
   font-weight: 700;
   line-height: 1;
 }
 
-/* --- États métier partagés Produits / Commande ------------------------- */
-/* Quantité ≤ seuil : une seule définition, réutilisée partout. */
-.ligne-alerte > td {
+/* --- Business states shared by Products / Order ------------------------ */
+/* Quantity ≤ threshold: one single definition, reused everywhere. */
+.alert-row > td {
   background-color: #fff7ed;
 }
 
-.badge-alerte {
-  background-color: var(--couleur-alerte);
+.badge-alert {
+  background-color: var(--alert-color);
   color: #fff;
 }
 
-.badge-rupture {
-  background-color: var(--couleur-rupture);
+.badge-out-of-stock {
+  background-color: var(--out-of-stock-color);
   color: #fff;
 }
 
-/* --- Mise en page ------------------------------------------------------ */
-.entete-page {
+/* --- Layout ----------------------------------------------------------- */
+.page-header {
   border-bottom: 1px solid #e5e7eb;
   margin-bottom: 1.25rem;
   padding-bottom: 0.75rem;
 }
 
-.entete-page h1 {
+.page-header h1 {
   font-size: 1.5rem;
   margin-bottom: 0.15rem;
 }
 
-.entete-page .sous-titre {
+.page-header .subtitle {
   color: #6b7280;
   font-size: 0.9rem;
 }
