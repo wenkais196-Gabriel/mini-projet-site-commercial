@@ -31,7 +31,10 @@ avec lui, on le signale au lieu de contourner.
    ne va **jamais** dans un `useState`.
 4. Aucun composant ne mute les données : il passe par une action du store.
 5. `npm run build` doit passer **avant chaque commit** ; `npm run lint` doit
-   afficher **0 avertissement**.
+   afficher **0 avertissement** ; `npm test` doit être **entièrement vert**.
+6. Toute règle métier nouvelle arrive **avec son test** dans `test/`, et vit dans un
+   module **pur** (aucun JSX, aucun hook) : c'est ce qui rend l'état vérifiable sans
+   navigateur. Un composant ne contient que de l'assemblage.
 
 ## 3. Langue et style
 
@@ -60,6 +63,8 @@ avec lui, on le signale au lieu de contourner.
 
 - [ ] `npm run build` : 0 erreur
 - [ ] `npm run lint` : 0 avertissement
+- [ ] `npm test` : 0 échec
+- [ ] `node verif/verif-e2e.cjs` : 0 échec (voir `verif/README.md`)
 - [ ] Les 3 pages se naviguent sans rechargement, depuis et vers n'importe quelle autre
 - [ ] Un scénario complet passant par les 3 pages : commander → le stock baisse →
       le surlignage apparaît sur Produits → le compteur change sur Accueil
