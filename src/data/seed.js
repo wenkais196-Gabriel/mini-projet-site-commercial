@@ -1,65 +1,69 @@
 /* =============================================================================
-   seed.js — SOURCE DE VÉRITÉ UNIQUE des données.
-   Le sujet impose des données « en dur » (pas de serveur). Le reste de
-   l'application ne lit JAMAIS ce fichier directement : tout passe par le store
-   (src/store/DataContext.jsx). C'est ce qui permet à une commande passée page
-   Commande de modifier l'affichage des pages Produits et Accueil.
+   seed.js — SOURCE OF TRUTH for the data.
+
+   The assignment requires hard-coded data (no server). The rest of the
+   application NEVER reads this file directly: everything goes through the store
+   (src/store/DataContext.jsx). That is what allows an order placed on the Order
+   page to change what the Products and Home pages display.
+
+   Note: field NAMES are English (code rule), but the data VALUES stay French —
+   they are what the user reads on screen.
    ========================================================================== */
 
-/** @typedef {{ id: string, nom: string, categorie: string, prix: number, quantite: number, seuil: number }} Produit */
-/** @typedef {{ idProduit: string, quantite: number }} Ligne */
-/** @typedef {{ id: string, date: string, client: { nom: string, prenom: string, email: string }, lignes: Ligne[] }} Commande */
+/** @typedef {{ id: string, name: string, category: string, price: number, quantity: number, threshold: number }} Product */
+/** @typedef {{ productId: string, quantity: number }} OrderLine */
+/** @typedef {{ id: string, date: string, customer: { firstName: string, lastName: string, email: string }, lines: OrderLine[] }} Order */
 
-/** Catégories connues (sert à la liste déroulante de filtres). */
+/** Known categories (used by the filter drop-down). */
 export const CATEGORIES = ["Fruit", "Légume", "Boisson"];
 
-/* Noter les cas volontairement variés pour la démonstration :
-   - P02 / P07 / P09 / P13 : quantité AU-DESSUS de 0 mais ≤ seuil → alerte
-   - P03 : quantité = 0 → rupture
-   - P05 : quantité EXACTEMENT égale au seuil → cas limite (voir README, choix « ≤ »)
-   @type {Produit[]} */
-export const PRODUITS_INITIAUX = [
-  { id: "P01", nom: "Banane", categorie: "Fruit", prix: 2.4, quantite: 42, seuil: 15 },
-  { id: "P02", nom: "Pomme", categorie: "Fruit", prix: 1.6, quantite: 8, seuil: 20 },
-  { id: "P03", nom: "Cerise", categorie: "Fruit", prix: 3.4, quantite: 0, seuil: 10 },
-  { id: "P04", nom: "Kiwi", categorie: "Fruit", prix: 4.55, quantite: 35, seuil: 12 },
-  { id: "P05", nom: "Orange", categorie: "Fruit", prix: 2.1, quantite: 12, seuil: 12 },
-  { id: "P06", nom: "Carotte", categorie: "Légume", prix: 1.2, quantite: 60, seuil: 25 },
-  { id: "P07", nom: "Chou", categorie: "Légume", prix: 4.5, quantite: 14, seuil: 30 },
-  { id: "P08", nom: "Céleri", categorie: "Légume", prix: 2.9, quantite: 45, seuil: 15 },
-  { id: "P09", nom: "Courgette", categorie: "Légume", prix: 1.95, quantite: 5, seuil: 18 },
-  { id: "P10", nom: "Poivron", categorie: "Légume", prix: 3.75, quantite: 22, seuil: 10 },
-  { id: "P11", nom: "Limonade", categorie: "Boisson", prix: 1.8, quantite: 28, seuil: 12 },
-  { id: "P12", nom: "Eau minérale", categorie: "Boisson", prix: 0.2, quantite: 90, seuil: 20 },
-  { id: "P13", nom: "Jus d'orange", categorie: "Boisson", prix: 2.6, quantite: 3, seuil: 15 },
+/* The cases below are deliberately varied so the UI can be demonstrated:
+   - P02 / P07 / P09 / P13 : quantity ABOVE 0 but ≤ threshold  → low stock
+   - P03                   : quantity = 0                      → out of stock
+   - P05                   : quantity EXACTLY equal to threshold → boundary case
+   @type {Product[]} */
+export const INITIAL_PRODUCTS = [
+  { id: "P01", name: "Banane", category: "Fruit", price: 2.4, quantity: 42, threshold: 15 },
+  { id: "P02", name: "Pomme", category: "Fruit", price: 1.6, quantity: 8, threshold: 20 },
+  { id: "P03", name: "Cerise", category: "Fruit", price: 3.4, quantity: 0, threshold: 10 },
+  { id: "P04", name: "Kiwi", category: "Fruit", price: 4.55, quantity: 35, threshold: 12 },
+  { id: "P05", name: "Orange", category: "Fruit", price: 2.1, quantity: 12, threshold: 12 },
+  { id: "P06", name: "Carotte", category: "Légume", price: 1.2, quantity: 60, threshold: 25 },
+  { id: "P07", name: "Chou", category: "Légume", price: 4.5, quantity: 14, threshold: 30 },
+  { id: "P08", name: "Céleri", category: "Légume", price: 2.9, quantity: 45, threshold: 15 },
+  { id: "P09", name: "Courgette", category: "Légume", price: 1.95, quantity: 5, threshold: 18 },
+  { id: "P10", name: "Poivron", category: "Légume", price: 3.75, quantity: 22, threshold: 10 },
+  { id: "P11", name: "Limonade", category: "Boisson", price: 1.8, quantity: 28, threshold: 12 },
+  { id: "P12", name: "Eau minérale", category: "Boisson", price: 0.2, quantity: 90, threshold: 20 },
+  { id: "P13", name: "Jus d'orange", category: "Boisson", price: 2.6, quantity: 3, threshold: 15 },
 ];
 
-/* Commandes historiques : elles existent pour que la page Accueil ne démarre pas
-   à zéro. Les quantités ci-dessus sont réputées DÉJÀ décrémentées de ces commandes.
-   @type {Commande[]} */
-export const COMMANDES_INITIALES = [
+/* Past orders: they exist so the Home page does not start at zero.
+   The quantities above are considered ALREADY decremented by these orders.
+   @type {Order[]} */
+export const INITIAL_ORDERS = [
   {
     id: "C001",
     date: "2026-09-28",
-    client: { nom: "Dupont", prenom: "Marie", email: "marie.dupont@exemple.fr" },
-    lignes: [
-      { idProduit: "P01", quantite: 2 },
-      { idProduit: "P12", quantite: 6 },
+    customer: { firstName: "Marie", lastName: "Dupont", email: "marie.dupont@exemple.fr" },
+    lines: [
+      { productId: "P01", quantity: 2 },
+      { productId: "P12", quantity: 6 },
     ],
   },
   {
     id: "C002",
     date: "2026-10-01",
-    client: { nom: "Martin", prenom: "Louis", email: "louis.martin@exemple.fr" },
-    lignes: [
-      { idProduit: "P06", quantite: 3 },
-      { idProduit: "P07", quantite: 1 },
+    customer: { firstName: "Louis", lastName: "Martin", email: "louis.martin@exemple.fr" },
+    lines: [
+      { productId: "P06", quantity: 3 },
+      { productId: "P07", quantity: 1 },
     ],
   },
   {
     id: "C003",
     date: "2026-10-05",
-    client: { nom: "Benali", prenom: "Amine", email: "amine.benali@exemple.fr" },
-    lignes: [{ idProduit: "P11", quantite: 4 }],
+    customer: { firstName: "Amine", lastName: "Benali", email: "amine.benali@exemple.fr" },
+    lines: [{ productId: "P11", quantity: 4 }],
   },
 ];

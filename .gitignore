@@ -21,5 +21,5 @@ npm-debug.log*
 *.tmp
 scratch/
 
-# Captures produites par la vérification de bout en bout (voir verif/)
-verif/*.png
+# Captures produites par la vérification de bout en bout (voir check/)
+check/*.png

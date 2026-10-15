@@ -1,122 +1,122 @@
 /* =============================================================================
-   DataContext.jsx — la COLLE React de l'état partagé.
+   DataContext.jsx — the React GLUE of the shared state.
 
-   Ce fichier ne contient plus aucune règle métier : les calculs sont dans
-   `selecteurs.js`, les transitions dans `etat.js`, la construction d'une commande
-   dans `commandeBuilder.js`, les états du formulaire dans `statutCommande.js`.
-   Ici on ne fait que trois choses :
+   This file no longer holds any business rule: the calculations are in
+   `selectors.js`, the transitions in `state.js`, the building of an order in
+   `orderBuilder.js`, the states of the form in `orderStatus.js`.
+   Here we only do three things:
 
-     1. créer l'état unique de l'application (un seul <DataProvider> monté) ;
-     2. exposer les actions qui le font évoluer ;
-     3. fournir le hook `useData()` qui y donne accès.
+     1. create the single state of the application (one <DataProvider> mounted);
+     2. expose the actions that make it evolve;
+     3. provide the `useData()` hook that gives access to it.
 
-   Problème à résoudre : les 3 pages sont indépendantes, il n'y a pas de serveur,
-   et pourtant « les données sont liées entre les pages virtuelles ». Une donnée
-   ne peut donc pas appartenir à une page : elle appartient à un ANCÊTRE COMMUN,
-   ici le DataProvider placé au-dessus du router (voir src/App.jsx).
+   Problem to solve: the 3 pages are independent, there is no server, and yet "the
+   data are linked between the virtual pages". A piece of data therefore cannot
+   belong to a page: it belongs to a COMMON ANCESTOR, here the DataProvider placed
+   above the router (see src/App.jsx).
 
-   Ce que ce fichier apporte pour la partie 2 (analyse de patterns) :
-   - un ÉTAT unique dont les transitions sont des fonctions pures (piste Command) ;
-   - les composants abonnés (useData) sont RE-RENDUS quand l'état change : c'est
-     exactement un mécanisme publier/abonner (piste Observer) ;
-   - l'instance unique fournie par le Provider est un point d'accès unique
-     (piste Singleton), à la réserve qu'en React on préfère « état unique +
-     notification » à « variable globale mutable ».
+   What this file brings to part 2 (design pattern analysis):
+   - a single STATE whose transitions are pure functions (Command lead);
+   - the subscribed components (useData) are RE-RENDERED when the state changes:
+     that is exactly a publish/subscribe mechanism (Observer lead);
+   - the single instance provided by the Provider is a single entry point
+     (Singleton lead), with the caveat that in React we prefer "single state +
+     notification" over "mutable global variable".
 
-   Note outillage : ce module exporte à la fois un composant (DataProvider) et un
-   hook (useData). La règle de lint `react/only-export-components` vise les fichiers
-   d'un seul composant et signalerait ici un faux positif : elle est donc
-   désactivée pour CE fichier uniquement (voir .oxlintrc.json).
+   Tooling note: this module exports both a component (DataProvider) and a hook
+   (useData). The lint rule `react/only-export-components` targets single-component
+   files and would report a false positive here: it is therefore disabled for THIS
+   file only (see .oxlintrc.json).
    ========================================================================== */
 
 import { createContext, useCallback, useContext, useMemo, useReducer } from "react";
-import { calculerStatistiques } from "./selecteurs.js";
+import { computeStats } from "./selectors.js";
 import {
-  annulerDerniereOperation as transitionAnnulerDerniereOperation,
-  appliquerCommande,
-  creerEtatInitial,
+  createInitialState,
+  placeOrder,
   reducer,
-} from "./etat.js";
+  undoLastOperation as transitionUndoLastOperation,
+} from "./state.js";
 
 const DataContext = createContext(null);
 
 /**
- * Fournit l'état et les actions à tout l'arbre de composants.
- * @param {{ children: React.ReactNode, dateDuJour?: string }} props
- *   `dateDuJour` est injectable pour rendre les tests déterministes
- *   (en production, on utilise la date du jour).
+ * Provides the state and the actions to the whole component tree.
+ * @param {{ children: React.ReactNode, today?: string }} props
+ *   `today` is injectable to keep the tests deterministic
+ *   (in production, the current date is used).
  */
-export function DataProvider({ children, dateDuJour }) {
-  const [etat, dispatch] = useReducer(reducer, undefined, creerEtatInitial);
+export function DataProvider({ children, today }) {
+  const [state, dispatch] = useReducer(reducer, undefined, createInitialState);
 
   /**
-   * Enregistre une commande si elle est valide, sinon renvoie le rapport d'erreurs.
-   * La transition est calculée AVANT le dispatch : c'est ce qui permet de renvoyer
-   * à l'appelant la commande réellement créée (un reducer, lui, ne renvoie rien).
+   * Saves an order when it is valid, otherwise returns the error report.
+   * The transition is computed BEFORE the dispatch: that is what makes it possible
+   * to hand back to the caller the order actually created (a reducer returns nothing).
    */
-  const validerCommande = useCallback(
-    (formulaire) => {
-      const date = dateDuJour ?? new Date().toISOString().slice(0, 10);
-      const { rapport, commande } = appliquerCommande(etat, formulaire, date);
+  const saveOrder = useCallback(
+    (form) => {
+      const date = today ?? new Date().toISOString().slice(0, 10);
+      const { report, order } = placeOrder(state, form, date);
 
-      if (commande === null) return rapport; // la page affiche les erreurs
+      if (order === null) return report; // the page displays the errors
 
-      dispatch({ type: "VALIDER_COMMANDE", formulaire, date });
-      return { ...rapport, commande };
+      dispatch({ type: "PLACE_ORDER", form, date });
+      return { ...report, order };
     },
-    [etat, dateDuJour],
+    [state, today],
   );
 
   /**
-   * Annule la dernière opération enregistrée (pattern Command).
-   * @returns {{ annulee: boolean, libelle?: string }}
+   * Undoes the last recorded operation (Command pattern).
+   * @returns {{ undone: boolean, label?: string }}
    */
-  const annulerDerniereOperation = useCallback(() => {
-    const { operation } = transitionAnnulerDerniereOperation(etat);
-    if (operation === null) return { annulee: false };
+  const undoLastOperation = useCallback(() => {
+    const { operation } = transitionUndoLastOperation(state);
+    if (operation === null) return { undone: false };
 
-    dispatch({ type: "ANNULER_DERNIERE_OPERATION" });
-    return { annulee: true, libelle: operation.libelle };
-  }, [etat]);
+    dispatch({ type: "UNDO_LAST_OPERATION" });
+    return { undone: true, label: operation.label };
+  }, [state]);
 
-  /** Rétablit les données de départ (démonstration / soutenance). */
-  const reinitialiser = useCallback(() => dispatch({ type: "REINITIALISER" }), []);
+  /** Restores the starting data (demonstration / defence). */
+  const reset = useCallback(() => dispatch({ type: "RESET" }), []);
 
-  const valeur = useMemo(
+  const value = useMemo(
     () => ({
-      /** @type {import('../data/seed.js').Produit[]} */
-      produits: etat.produits,
-      /** @type {import('../data/seed.js').Commande[]} */
-      commandes: etat.commandes,
-      /** Indicateurs dérivés, recalculés à chaque changement d'état. */
-      statistiques: calculerStatistiques(etat.produits, etat.commandes),
-      /** Enregistre une commande si elle est valide, sinon renvoie les erreurs. */
-      validerCommande,
-      /** Annule la dernière opération ; renvoie `{ annulee, libelle }`. */
-      annulerDerniereOperation,
-      /** Dernière opération annulable, ou `null` (sert au libellé du bouton). */
-      derniereOperation: etat.historique.at(-1) ?? null,
-      peutAnnuler: etat.historique.length > 0,
-      /** Rétablit les données de départ. */
-      reinitialiser,
+      /** @type {import('../data/seed.js').Product[]} */
+      products: state.products,
+      /** @type {import('../data/seed.js').Order[]} */
+      orders: state.orders,
+      /** Derived indicators, recomputed on every state change. */
+      stats: computeStats(state.products, state.orders),
+      /** Saves an order when it is valid, otherwise returns the errors. */
+      saveOrder,
+      /** Undoes the last operation; returns `{ undone, label }`. */
+      undoLastOperation,
+      /** Last undoable operation, or `null` (used for the button label). */
+      lastOperation: state.history.at(-1) ?? null,
+      canUndo: state.history.length > 0,
+      /** Restores the starting data. */
+      reset,
     }),
-    [etat, validerCommande, annulerDerniereOperation, reinitialiser],
+    [state, saveOrder, undoLastOperation, reset],
   );
 
-  return <DataContext.Provider value={valeur}>{children}</DataContext.Provider>;
+  return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }
 
 /**
- * Point d'accès unique à l'état partagé, utilisé par les pages et les composants.
- * L'erreur levée est volontairement explicite : c'est le piège n°1 en React
- * (composant utilisé hors de son fournisseur → contexte `null` silencieux).
+ * Single entry point to the shared state, used by the pages and the components.
+ * The thrown error is deliberately explicit: it is trap #1 in React
+ * (a component used outside its provider → silent `null` context).
  */
 export function useData() {
-  const contexte = useContext(DataContext);
-  if (contexte === null) {
+  const context = useContext(DataContext);
+  if (context === null) {
     throw new Error(
       "useData() doit être appelé dans un <DataProvider> (voir src/App.jsx).",
     );
   }
-  return contexte;
+  return context;
 }

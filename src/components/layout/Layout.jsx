@@ -2,85 +2,79 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useData } from "../../store/DataContext.jsx";
 
 /**
- * Layout — gabarit commun aux 3 pages virtuelles.
- * La barre de navigation est écrite UNE fois ; seule la zone <Outlet/> change.
- * C'est l'intérêt de la route parente : le chrome de l'application ne se
- * reconstruit pas à chaque navigation.
+ * Layout — common template of the three virtual pages.
+ * The navigation bar is written ONCE; only the <Outlet/> area changes. That is the
+ * point of the parent route: the chrome of the application is not rebuilt on every
+ * navigation.
  *
- * Elle porte aussi les deux commandes globales :
- * - « Annuler » (pattern Command) défait la dernière opération enregistrée, donc
- *   rend le stock prélevé et retire la commande ;
- * - « Réinitialiser » revient aux données de départ, pour rejouer une démonstration.
+ * It also carries the two global commands:
+ * - "Annuler" (Command pattern) undoes the last recorded operation, therefore it
+ *   gives back the stock that was taken and removes the order;
+ * - "Réinitialiser" goes back to the starting data, to replay a demonstration.
  */
 export function Layout() {
-  const {
-    statistiques,
-    peutAnnuler,
-    derniereOperation,
-    annulerDerniereOperation,
-    reinitialiser,
-  } = useData();
+  const { stats, canUndo, lastOperation, undoLastOperation, reset } = useData();
 
-  const classeLien = ({ isActive }) =>
+  const linkClass = ({ isActive }) =>
     isActive ? "nav-link active fw-semibold" : "nav-link";
 
   return (
     <>
       <nav
         className="navbar navbar-expand navbar-dark"
-        style={{ backgroundColor: "var(--couleur-primaire)" }}
+        style={{ backgroundColor: "var(--primary-color)" }}
       >
         <div className="container">
           <span className="navbar-brand mb-0 h1">Site commercial</span>
 
           <ul className="navbar-nav me-auto">
-            {/* `end` sur la racine : sinon « / » serait actif sur toutes les pages */}
+            {/* `end` on the root: otherwise « / » would be active on every page */}
             <li className="nav-item">
-              <NavLink to="/" end className={classeLien}>
+              <NavLink to="/" end className={linkClass}>
                 Accueil
               </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink to="/produits" className={classeLien}>
+              <NavLink to="/produits" className={linkClass}>
                 Produits
               </NavLink>
             </li>
             <li className="nav-item">
-              <NavLink to="/commande" className={classeLien}>
+              <NavLink to="/commande" className={linkClass}>
                 Commande
               </NavLink>
             </li>
           </ul>
 
           <div className="d-flex align-items-center gap-3">
-            <span className="text-white-50 small text-end" data-testid="resume-global">
-              {statistiques.nbCommandes} commande{statistiques.nbCommandes > 1 ? "s" : ""}
-              {statistiques.nbAlertes > 0
-                ? ` · ${statistiques.nbAlertes} alerte${statistiques.nbAlertes > 1 ? "s" : ""}`
+            <span className="text-white-50 small text-end" data-testid="global-summary">
+              {stats.orderCount} commande{stats.orderCount > 1 ? "s" : ""}
+              {stats.lowStockCount > 0
+                ? ` · ${stats.lowStockCount} alerte${stats.lowStockCount > 1 ? "s" : ""}`
                 : ""}
-              {peutAnnuler ? ` · dernière opération : ${derniereOperation.libelle}` : ""}
+              {canUndo ? ` · dernière opération : ${lastOperation.label}` : ""}
             </span>
 
-            {/* Pattern Command : annuler la dernière opération enregistrée */}
+            {/* Command pattern: undo the last recorded operation */}
             <button
               type="button"
               className="btn btn-sm btn-outline-light text-nowrap"
-              disabled={!peutAnnuler}
+              disabled={!canUndo}
               title={
-                peutAnnuler
-                  ? `Annuler la ${derniereOperation.libelle}`
+                canUndo
+                  ? `Annuler la ${lastOperation.label}`
                   : "Aucune opération à annuler"
               }
-              onClick={annulerDerniereOperation}
+              onClick={undoLastOperation}
             >
               Annuler
             </button>
 
-            {/* Outil de démonstration : permet de rejouer la soutenance à volonté */}
+            {/* Demonstration tool: makes it possible to replay the defence at will */}
             <button
               type="button"
               className="btn btn-sm btn-outline-light text-nowrap"
-              onClick={reinitialiser}
+              onClick={reset}
               title="Rétablir les données de départ"
             >
               Réinitialiser

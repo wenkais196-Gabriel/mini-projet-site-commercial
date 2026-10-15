@@ -28,7 +28,7 @@ npm test        # tests unitaires : règles, transitions, Builder, machine à é
 
 `npm test` utilise le lanceur de tests intégré à Node : **aucune dépendance à
 installer**. La vérification de l'application entière dans un vrai navigateur est
-décrite dans [`verif/README.md`](verif/README.md).
+décrite dans [`check/README.md`](check/README.md).
 
 Node 22+ / npm 11+. Rien d'autre à installer : Bootstrap est chargé par CDN, comme
 dans l'exercice 4.
@@ -62,36 +62,37 @@ App  (câblage : provider de données + router)
 └── DataProvider              ← l'état partagé (produits + commandes)
     └── BrowserRouter
         └── Layout            ← barre de navigation commune + <Outlet/>
-            ├── AccueilPage
-            ├── ProduitsPage
-            └── CommandePage
+            ├── HomePage
+            ├── ProductsPage
+            └── OrderPage
 ```
 
 ```
 src/
   data/seed.js               données de départ (source de vérité unique)
   store/DataContext.jsx      colle React : useData() + actions (AUCUNE règle métier)
-  store/etat.js              état et transitions PURES (patterns Command)
-  store/selecteurs.js        calculs et validations PURES (filtres, stats, règles)
-  store/commandeBuilder.js   construction d'une commande (pattern Builder)
-  store/statutCommande.js    machine à états du formulaire (pattern State)
+  store/state.js             état et transitions PURES (pattern Command)
+  store/selectors.js         calculs et validations PURES (filtres, stats, règles)
+  store/orderBuilder.js      construction d'une commande (pattern Builder)
+  store/orderStatus.js       machine à états du formulaire (pattern State)
   pages/                     1 fichier = 1 page virtuelle (orchestration + état local)
-  components/produits/       RowProduct, TableProduits, FiltreProduits
-  components/commande/       LigneCommande, SelecteurQuantite
-  components/indicateurs/    CarteKPI
+  components/form/           atomes réutilisables : Input, Checkbox, Range
+  components/products/       RowProduct, TableCategory, TableProducts, ProductFilter
+  components/order/          OrderRow, QuantitySelector
+  components/indicators/     KpiCard
   components/layout/         Layout (barre de navigation + commandes globales)
 docs/
   analyse-design-patterns.md document de remise (partie 2)
   diagrammes/                diagrammes de composants (sources .puml + rendus)
 test/                        tests unitaires des modules purs (node --test, 0 dépendance)
-verif/                       vérification de bout en bout dans un navigateur (outil)
+check/                       vérification de bout en bout dans un navigateur (outil)
 ```
 
 Deux règles d'architecture à ne jamais casser :
 
 1. **Aucun composant ne lit `src/data/seed.js`** : tout passe par `useData()`.
    Sinon les pages cessent de voir les mêmes données.
-2. **Les calculs vivent dans `selecteurs.js`**, jamais dans un composant.
+2. **Les calculs vivent dans `selectors.js`**, jamais dans un composant.
    Une règle = un seul endroit = impossible de diverger entre deux pages.
 
 ---
@@ -102,14 +103,14 @@ Deux règles d'architecture à ne jamais casser :
 
 | Clé | Type | Usage |
 |---|---|---|
-| `produits` | `{ id, nom, categorie, prix, quantite, seuil }[]` | liste courante |
-| `commandes` | `{ id, date, client, lignes[] }[]` | commandes enregistrées |
-| `statistiques` | objet | indicateurs dérivés (page Accueil) |
-| `validerCommande(formulaire)` | fonction | enregistre si valide, renvoie `{ valide, erreurs, erreursParProduit, commande? }` |
-| `annulerDerniereOperation()` | fonction | défait la dernière opération (pattern Command) ; renvoie `{ annulee, libelle? }` |
-| `derniereOperation` | `{ libelle, … }` ou `null` | la dernière opération annulable (libellé du bouton) |
-| `peutAnnuler` | booléen | vrai s'il reste une opération à annuler |
-| `reinitialiser()` | fonction | rétablit les données de départ |
+| `products` | `{ id, name, category, price, quantity, threshold }[]` | liste courante |
+| `orders` | `{ id, date, customer, lines[] }[]` | commandes enregistrées |
+| `stats` | objet | indicateurs dérivés (page Accueil) |
+| `saveOrder(form)` | fonction | enregistre si valide, renvoie `{ valid, errors, errorsByProduct, order? }` |
+| `undoLastOperation()` | fonction | défait la dernière opération (pattern Command) ; renvoie `{ undone, label? }` |
+| `lastOperation` | `{ label, … }` ou `null` | la dernière opération annulable (libellé du bouton) |
+| `canUndo` | booléen | vrai s'il reste une opération à annuler |
+| `reset()` | fonction | rétablit les données de départ |
 
 Le modèle de données et ces signatures sont **gelés** : toute évolution doit être
 annoncée avant d'être codée, sinon le binôme travaille sur deux versions différentes.
@@ -120,11 +121,12 @@ annoncée avant d'être codée, sinon le binôme travaille sur deux versions dif
 
 | Qui | Périmètre | Fichiers |
 |---|---|---|
-| **A — SONG Wenkai** | Commande, architecture, compte-rendu | `pages/CommandePage.jsx`, `components/commande/**`, `store/**`, `docs/**` |
-| **B — SUI Wenhui** | Accueil, Produits, données | `pages/AccueilPage.jsx`, `pages/ProduitsPage.jsx`, `components/produits/**`, `components/indicateurs/**`, `data/seed.js` |
+| **A — SONG Wenkai** | Commande, architecture, compte-rendu | `src/pages/OrderPage.jsx`, `src/components/order/**`, `src/store/**`, `docs/**` |
+| **B — SUI Wenhui** | Accueil, Produits, données | `src/pages/HomePage.jsx`, `src/pages/ProductsPage.jsx`, `src/components/products/**`, `src/components/indicators/**`, `src/data/seed.js` |
+| **B — SUI Wenhui** | Atomes de formulaire partagés | `src/components/form/**` (Input, Checkbox, Range) |
 
 Chacun ne modifie que ses fichiers. `src/store/` n'est modifié que par A — si B a
-besoin d'un nouveau calcul, il le demande (ou l'ajoute dans `selecteurs.js` après
+besoin d'un nouveau calcul, il le demande (ou l'ajoute dans `selectors.js` après
 accord, c'est le fichier partagé le moins conflictuel).
 
 ---

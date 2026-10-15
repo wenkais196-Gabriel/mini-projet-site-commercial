@@ -1,0 +1,266 @@
+/* =============================================================================
+   e2e.cjs — end-to-end check in a REAL browser.
+
+   This is not a unit test: it drives Microsoft Edge the way a user would, and it
+   checks the central property of the assignment — "the data are linked between the
+   virtual pages":
+
+       place an order  →  the stock goes down  →  the Products page highlights the row
+                                               →  the Home counter changes
+       undo the operation  →  everything goes back to the previous state
+
+   How to run (see check/README.md):
+
+       npm i --no-save --no-package-lock playwright-core
+       npm run dev
+       node check/e2e.cjs
+   ========================================================================== */
+
+const { chromium } = require("playwright-core");
+
+const BASE = "http://localhost:5173";
+const results = [];
+
+const ok = (label, condition, detail = "") => {
+  results.push(`${condition ? "OK   " : "FAIL"} | ${label}${detail ? "  -> " + detail : ""}`);
+  return condition;
+};
+
+async function readKpis(page) {
+  return page.$$eval(".kpi", (cards) =>
+    cards.map((card) => ({
+      label: (card.querySelector(".kpi-label")?.textContent ?? "").trim(),
+      value: (card.querySelector(".kpi-value")?.textContent ?? "").trim(),
+    })),
+  );
+}
+
+const productRow = (page, name) => page.locator("tbody tr").filter({ hasText: name }).first();
+
+/* Labels are accented: comparison drops accents so the check does not depend on the
+   keyboard of whoever writes it. */
+const unaccent = (text) =>
+  text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+const displayedStatus = (page) => page.locator('[data-testid="order-status"]').innerText();
+
+(async () => {
+  const browser = await chromium.launch({ channel: "msedge" });
+  const context = await browser.newContext({ viewport: { width: 1500, height: 1000 } });
+  const page = await context.newPage();
+
+  const errors = [];
+  const warnings = [];
+  page.on("pageerror", (error) => errors.push("pageerror: " + error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push("console: " + message.text());
+    if (message.type() === "warning") warnings.push(message.text());
+  });
+
+  /* ---------- 1. Home page --------------------------------------------- */
+  await page.goto(BASE, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector(".kpi");
+
+  ok("Home: page title", (await page.textContent("h1")).trim() === "Tableau de bord");
+
+  const firstKpis = await readKpis(page);
+  const ordersBefore = firstKpis.find((kpi) => kpi.label === "Commandes")?.value;
+  ok("Home: 4 indicators displayed", firstKpis.length === 4, `${firstKpis.length} cards`);
+  ok("Home: 3 initial orders", ordersBefore === "3", `value = ${ordersBefore}`);
+  ok("Home: breakdown of the 3 categories", (await page.locator("tbody tr").count()) === 3);
+  await page.screenshot({ path: "check/01-home.png", fullPage: true });
+
+  /* ---------- 2. Products page ----------------------------------------- */
+  await page.getByRole("link", { name: "Produits" }).click();
+  await page.waitForURL("**/produits");
+  await page.waitForSelector("tbody tr");
+  ok("Products: navigation through the menu", page.url().endsWith("/produits"));
+
+  const totalRows = await page.locator("tbody tr").count();
+  const pepperBefore = productRow(page, "Poivron");
+  const classBefore = (await pepperBefore.getAttribute("class")) ?? "";
+  const quantityBefore = (await pepperBefore.locator("td").nth(3).innerText()).trim();
+  ok("Products: Poivron not highlighted at start", !classBefore.includes("alert-row"));
+  ok("Products: Poivron stock = 22", quantityBefore === "22", `quantity = ${quantityBefore}`);
+
+  await page.fill("#filter-search", "Chou");
+  await page.waitForTimeout(200);
+  const afterNameFilter = await page.locator("tbody tr").count();
+  ok("Products: the « nom » filter narrows the list", afterNameFilter < totalRows, `${totalRows} -> ${afterNameFilter}`);
+
+  await page.click('button:has-text("Réinitialiser les filtres")');
+  await page.waitForTimeout(200);
+  ok(
+    "Products: « Réinitialiser les filtres » restores the list",
+    (await page.locator("tbody tr").count()) === totalRows,
+  );
+
+  await page.selectOption("#filter-category", "Boisson");
+  await page.waitForTimeout(200);
+  ok("Products: the « catégorie » filter isolates the drinks", (await page.locator("tbody tr").count()) === 4);
+
+  await page.click('button:has-text("Réinitialiser les filtres")');
+  await page.waitForTimeout(150);
+
+  // Sorting (added for issue #2)
+  await page.click('button:has-text("Prix")');
+  await page.waitForTimeout(200);
+  const firstAfterSort = (await page.locator("tbody tr").nth(1).innerText()).trim();
+  ok("Products: sorting by price changes the order", firstAfterSort.length > 0, firstAfterSort.split("\t")[0]);
+  await page.click('button:has-text("Effacer le tri")');
+  await page.waitForTimeout(150);
+
+  await page.check("#filter-low-stock");
+  await page.waitForTimeout(200);
+  ok("Products: the « alertes » filter keeps only the low-stock items", (await page.locator("tbody tr").count()) < totalRows);
+  await page.uncheck("#filter-low-stock");
+  await page.waitForTimeout(150);
+  await page.screenshot({ path: "check/02-products.png", fullPage: true });
+
+  /* ---------- 3. Order page: the state machine -------------------------- */
+  await page.getByRole("link", { name: "Commande" }).click();
+  await page.waitForURL("**/commande");
+  ok("Order: navigation through the menu", page.url().endsWith("/commande"));
+  ok("Order: initial state « Brouillon »", (await displayedStatus(page)) === "Brouillon");
+
+  // Submitting an empty form MUST produce errors: the « Invalide » state is what
+  // triggers their display, not a condition in the JSX.
+  await page.getByRole("button", { name: "Valider la commande" }).click();
+  await page.waitForSelector(".alert-danger");
+  const errorMessages = await page.locator(".alert-danger li").allInnerTexts();
+  ok("Order: empty form refused with messages", errorMessages.length >= 4, `${errorMessages.length} messages`);
+  ok("Order: the state becomes « Invalide »", (await displayedStatus(page)) === "Invalide");
+  await page.screenshot({ path: "check/03-order-invalid.png", fullPage: true });
+
+  // Correcting makes the messages disappear: back to « En cours de saisie ».
+  await page.fill("#customer-last-name", "Wenkai");
+  await page.waitForTimeout(200);
+  ok("Order: typing makes the messages disappear", (await page.locator(".alert-danger").count()) === 0);
+  ok("Order: the state goes back to « En cours de saisie »", (await displayedStatus(page)) === "En cours de saisie");
+
+  await page.fill("#customer-first-name", "Song");
+  await page.fill("#customer-email", "wenkai@exemple.fr");
+
+  const quantityField = productRow(page, "Poivron").locator('input[type="number"]');
+  await quantityField.fill("999");
+  await page.waitForTimeout(200);
+  ok(
+    "Order: typing 999 is clamped to the stock (22)",
+    (await quantityField.inputValue()) === "22",
+    `field = ${await quantityField.inputValue()}`,
+  );
+
+  await quantityField.fill("12");
+  await page.waitForTimeout(200);
+  const cardHeader = (await page.locator(".card-header span.small").innerText()).trim();
+  ok("Order: total recomputed (12 × 3,75 = 45,00 €)", cardHeader.includes("45,00"), cardHeader);
+  await page.screenshot({ path: "check/04-order-filled.png", fullPage: true });
+
+  await page.getByRole("button", { name: "Valider la commande" }).click();
+  await page.waitForSelector(".alert-success");
+  const confirmation = (await page.textContent(".alert-success")).trim();
+  ok("Order: confirmation with the order number", /C004/.test(confirmation), confirmation.split(".")[0]);
+  ok("Order: the state becomes « Enregistrée »", (await displayedStatus(page)) === "Enregistrée");
+
+  const recapLines = await page.locator(".alert-success li").allInnerTexts();
+  ok(
+    "Order: recap of the placed order (12 Poivron = 45,00 €)",
+    recapLines.length === 1 && /12\s*[×x]\s*Poivron/.test(recapLines[0]) && /45,00/.test(recapLines[0]),
+    recapLines.join(" | ") || "(no line)",
+  );
+  ok("Order: form reset", (await page.inputValue("#customer-last-name")) === "");
+  await page.screenshot({ path: "check/05-order-saved.png", fullPage: true });
+
+  await page.getByRole("button", { name: "Nouvelle commande" }).click();
+  await page.waitForTimeout(200);
+  ok("Order: « Nouvelle commande » goes back to « Brouillon »", (await displayedStatus(page)) === "Brouillon");
+
+  /* ---------- 4. Back to Products: the data changed --------------------- */
+  await page.getByRole("link", { name: "Produits" }).click();
+  await page.waitForURL("**/produits");
+  await page.waitForSelector("tbody tr");
+
+  const pepperAfter = productRow(page, "Poivron");
+  const classAfter = (await pepperAfter.getAttribute("class")) ?? "";
+  const quantityAfter = (await pepperAfter.locator("td").nth(3).innerText()).trim();
+  const badgeAfter = (await pepperAfter.locator("td").nth(5).innerText()).trim();
+
+  ok("Products: stock decremented by the order (22 -> 10)", quantityAfter === "10", `quantity = ${quantityAfter}`);
+  ok("Products: the row becomes highlighted", classAfter.includes("alert-row"));
+  ok("Products: status badge updated", unaccent(badgeAfter).includes("reapprovisionner"), badgeAfter);
+  await page.screenshot({ path: "check/06-products-after-order.png", fullPage: true });
+
+  /* ---------- 5. Back to Home ------------------------------------------ */
+  await page.getByRole("link", { name: "Accueil" }).click();
+  await page.waitForURL(BASE + "/");
+  await page.waitForSelector(".kpi");
+  const afterKpis = await readKpis(page);
+  ok(
+    "Home: number of orders moved to 4",
+    afterKpis.find((kpi) => kpi.label === "Commandes")?.value === "4",
+  );
+
+  /* ---------- 6. Command pattern: undo the last operation --------------- */
+  const summary = (await page.locator('[data-testid="global-summary"]').innerText()).trim();
+  ok("Navigation bar: last undoable operation announced", /commande C004/.test(summary), summary);
+
+  await page.getByRole("button", { name: "Annuler", exact: true }).click();
+  await page.waitForTimeout(300);
+  const undoKpis = await readKpis(page);
+  ok(
+    "Undo: the order count goes back to 3",
+    undoKpis.find((kpi) => kpi.label === "Commandes")?.value === "3",
+  );
+  ok(
+    "Undo: the button becomes inactive again",
+    await page.getByRole("button", { name: "Annuler", exact: true }).isDisabled(),
+  );
+
+  await page.getByRole("link", { name: "Produits" }).click();
+  await page.waitForURL("**/produits");
+  await page.waitForSelector("tbody tr");
+  const pepperRestored = productRow(page, "Poivron");
+  ok(
+    "Undo: the stock is given back (10 -> 22)",
+    (await pepperRestored.locator("td").nth(3).innerText()).trim() === "22",
+  );
+  ok(
+    "Undo: the highlight disappears",
+    !((await pepperRestored.getAttribute("class")) ?? "").includes("alert-row"),
+  );
+  await page.screenshot({ path: "check/07-after-undo.png", fullPage: true });
+
+  /* ---------- 7. Reset -------------------------------------------------- */
+  await page.getByRole("link", { name: "Accueil" }).click();
+  await page.waitForURL(BASE + "/");
+  await page.getByRole("button", { name: "Réinitialiser" }).click();
+  await page.waitForTimeout(300);
+  const resetKpis = await readKpis(page);
+  ok(
+    "Home: « Réinitialiser » restores the 3 orders",
+    resetKpis.find((kpi) => kpi.label === "Commandes")?.value === "3",
+  );
+
+  /* ---------- 8. Console health ---------------------------------------- */
+  ok("No JavaScript error in the console", errors.length === 0, errors.join(" || ") || "none");
+  ok(
+    "No warning in the console",
+    warnings.length === 0,
+    warnings.length ? [...new Set(warnings)].join(" || ") : "none",
+  );
+
+  await browser.close();
+
+  console.log("\n================ RESULTS ================");
+  results.forEach((line) => console.log(line));
+  const failures = results.filter((line) => line.startsWith("FAIL")).length;
+  console.log(`\n${results.length - failures}/${results.length} checks passed`);
+  process.exit(failures === 0 ? 0 : 1);
+})().catch((error) => {
+  console.error("FATAL ERROR:", error.message);
+  console.log("\n================ PARTIAL RESULTS ================");
+  results.forEach((line) => console.log(line));
+  const failures = results.filter((line) => line.startsWith("FAIL")).length;
+  console.log(`\n${results.length - failures}/${results.length} checks passed before the error`);
+  process.exit(2);
+});

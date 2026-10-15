@@ -1,32 +1,32 @@
 /* =============================================================================
-   App.jsx — configuration (le « câblage ») de l'application.
-   Rôle : une seule page HTML réelle, 3 pages virtuelles gérées par react-router.
-   Le <DataProvider> est placé AU-DESSUS du router : c'est lui qui rend les
-   données « liées entre les pages virtuelles » (exigence du sujet).
+   App.jsx — configuration (the "wiring") of the application.
+   Role: one single real HTML page, 3 virtual pages handled by react-router.
+   The <DataProvider> is placed ABOVE the router: it is what makes the data
+   "linked between the virtual pages" (requirement of the assignment).
    ========================================================================== */
 
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { DataProvider } from "./store/DataContext.jsx";
 import { Layout } from "./components/layout/Layout.jsx";
-import { AccueilPage } from "./pages/AccueilPage.jsx";
-import { ProduitsPage } from "./pages/ProduitsPage.jsx";
-import { CommandePage } from "./pages/CommandePage.jsx";
+import { HomePage } from "./pages/HomePage.jsx";
+import { ProductsPage } from "./pages/ProductsPage.jsx";
+import { OrderPage } from "./pages/OrderPage.jsx";
 
 export default function App() {
   return (
     <DataProvider>
-      {/* Les drapeaux `future` font taire les avertissements de migration de
-          react-router 6 (ils ne concernent pas notre code : ce sont des messages
-          de compatibilité v7). On reste bien en v6, la version du tutoriel du cours. */}
+      {/* The `future` flags silence the migration warnings of react-router 6 (they
+          do not concern our code: they are v7 compatibility messages). We stay on
+          v6, the version of the course tutorial. */}
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
-          {/* Layout = gabarit commun (barre de navigation + <Outlet/>).
-              Les 3 routes sont ses enfants : elles s'affichent « dans » le gabarit. */}
+          {/* Layout = common template (navigation bar + <Outlet/>).
+              The 3 routes are its children: they are displayed "inside" the template. */}
           <Route element={<Layout />}>
-            <Route path="/" element={<AccueilPage />} />
-            <Route path="/produits" element={<ProduitsPage />} />
-            <Route path="/commande" element={<CommandePage />} />
-            {/* Toute URL inconnue ramène à l'accueil */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/produits" element={<ProductsPage />} />
+            <Route path="/commande" element={<OrderPage />} />
+            {/* Any unknown URL goes back to the home page */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
