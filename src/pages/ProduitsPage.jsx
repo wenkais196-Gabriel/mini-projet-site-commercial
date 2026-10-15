@@ -1,20 +1,4 @@
-/* =============================================================================
-   ProduitsPage — liste des produits + filtres sur tous les attributs.
-
-   Rôle de cette page : elle est l'ORCHESTRATEUR. Elle est le seul composant de cet
-   écran à posséder un état (les critères de filtres) et elle fait la jonction :
-     FiltreProduits (remonte les critères) → page (état + filtrage) → TableProduits.
-   FiltreProduits et TableProduits ne se connaissent pas : ils ne communiquent que
-   par l'intermédiaire de leur parent. C'est le « lifting state up » du cours.
-
-   TODO (responsable : SUI Wenhui) — améliorations attendues :
-     - tri par colonne (nom, prix, quantité) ;
-     - filtres sur les 5 attributs à vérifier/soigner, réutilisation des petits
-       composants du cours (InputFiltre / CheckboxFiltre / RangeFiltre) ;
-     - mise en forme du surlignage et de la légende des états.
-   ========================================================================== */
-
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { FiltreProduits } from "../components/produits/FiltreProduits.jsx";
 import { TableProduits } from "../components/produits/TableProduits.jsx";
 import { useData } from "../store/DataContext.jsx";
@@ -24,7 +8,6 @@ import {
   filtrerProduits,
 } from "../store/selecteurs.js";
 
-/** Valeur initiale = « aucun filtre ». `null` signifie « critère non appliqué ». */
 const FILTRES_INITIAUX = {
   nom: "",
   categorie: "",
@@ -36,19 +19,38 @@ const FILTRES_INITIAUX = {
 
 export function ProduitsPage() {
   const { produits } = useData();
-  const [filtres, setFiltres] = useState(FILTRES_INITIAUX);
 
-  // Données dérivées : les catégories et les bornes des curseurs dépendent des
-  // données, donc on les recalcule quand `produits` change.
-  const categories = useMemo(() => categoriesUtilisees(produits), [produits]);
-  const bornes = useMemo(() => bornesFiltres(produits), [produits]);
-  const produitsAffiches = useMemo(
-    () => filtrerProduits(produits, filtres),
-    [produits, filtres],
-  );
+  const [filtres, setFiltres] = useState(FILTRES_INITIAUX);
+  const [tri, setTri] = useState({ colonne: "", ordre: "asc" });
+
+  const produitsFiltres = filtrerProduits(produits, filtres);
+
+  const produitsAffiches = [...produitsFiltres].sort((a, b) => {
+    if (!tri.colonne) return 0;
+
+    const comparaison =
+      tri.colonne === "nom"
+        ? a.nom.localeCompare(b.nom, "fr")
+        : a[tri.colonne] - b[tri.colonne];
+
+    return tri.ordre === "asc" ? comparaison : -comparaison;
+  });
 
   function changerFiltre(cle, valeur) {
-    setFiltres((precedents) => ({ ...precedents, [cle]: valeur }));
+    setFiltres((precedents) => ({
+      ...precedents,
+      [cle]: valeur,
+    }));
+  }
+
+  function changerTri(colonne) {
+    setTri((precedent) => ({
+      colonne,
+      ordre:
+        precedent.colonne === colonne && precedent.ordre === "asc"
+          ? "desc"
+          : "asc",
+    }));
   }
 
   return (
@@ -56,20 +58,55 @@ export function ProduitsPage() {
       <header className="entete-page">
         <h1>Produits</h1>
         <p className="sous-titre mb-0">
-          Les lignes surlignées signalent une quantité inférieure ou égale au seuil
-          de réapprovisionnement.
+          Les produits dont la quantité est inférieure ou égale au seuil
+          de réapprovisionnement sont signalés.
         </p>
       </header>
 
       <FiltreProduits
         valeurs={filtres}
-        bornes={bornes}
-        categories={categories}
+        bornes={bornesFiltres(produits)}
+        categories={categoriesUtilisees(produits)}
         nbResultats={produitsAffiches.length}
         nbTotal={produits.length}
         onChange={changerFiltre}
         onReinitialiser={() => setFiltres(FILTRES_INITIAUX)}
       />
+
+      <div className="mb-3 d-flex flex-wrap align-items-center gap-2">
+        <span className="small text-muted">Trier par :</span>
+
+        {[
+          { colonne: "nom", libelle: "Nom" },
+          { colonne: "prix", libelle: "Prix" },
+          { colonne: "quantite", libelle: "Quantité" },
+        ].map(({ colonne, libelle }) => (
+          <button
+            key={colonne}
+            type="button"
+            className={`btn btn-sm ${
+              tri.colonne === colonne
+                ? "btn-primary"
+                : "btn-outline-secondary"
+            }`}
+            onClick={() => changerTri(colonne)}
+          >
+            {libelle}
+            {tri.colonne === colonne &&
+              (tri.ordre === "asc" ? " ↑" : " ↓")}
+          </button>
+        ))}
+
+        {tri.colonne && (
+          <button
+            type="button"
+            className="btn btn-sm btn-link text-secondary"
+            onClick={() => setTri({ colonne: "", ordre: "asc" })}
+          >
+            Effacer le tri
+          </button>
+        )}
+      </div>
 
       <TableProduits produits={produitsAffiches} />
     </>
