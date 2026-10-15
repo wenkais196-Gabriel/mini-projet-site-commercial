@@ -13,7 +13,7 @@ import { useData } from "../../store/DataContext.jsx";
  * - "Réinitialiser" goes back to the starting data, to replay a demonstration.
  */
 export function Layout() {
-  const { stats, canUndo, lastOperation, undoLastOperation, reset } = useData();
+  const { canUndo, lastOperation, undoLastOperation, reset } = useData();
 
   const linkClass = ({ isActive }) =>
     isActive ? "nav-link active fw-semibold" : "nav-link";
@@ -47,13 +47,11 @@ export function Layout() {
           </ul>
 
           <div className="d-flex align-items-center gap-3">
-            <span className="text-white-50 small text-end" data-testid="global-summary">
-              {stats.orderCount} commande{stats.orderCount > 1 ? "s" : ""}
-              {stats.lowStockCount > 0
-                ? ` · ${stats.lowStockCount} alerte${stats.lowStockCount > 1 ? "s" : ""}`
-                : ""}
-              {canUndo ? ` · dernière opération : ${lastOperation.label}` : ""}
-            </span>
+            {canUndo ? (
+              <span className="text-white-50 small text-end" data-testid="global-summary">
+                dernière opération : {lastOperation.label}
+              </span>
+            ) : null}
 
             {/* Command pattern: undo the last recorded operation */}
             <button

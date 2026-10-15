@@ -38,7 +38,6 @@ export function TableProducts({ products }) {
             <th scope="col" className="text-end">Prix</th>
             <th scope="col" className="text-end">Quantité</th>
             <th scope="col" className="text-end">Seuil</th>
-            <th scope="col">État</th>
           </tr>
         </thead>
         <tbody>

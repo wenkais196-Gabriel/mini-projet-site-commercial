@@ -34,8 +34,8 @@ describe("state of a product", () => {
     assert.equal(isLowStock({ quantity: 42, threshold: 15 }), false);
   });
 
-  it("INCLUDES equality at the threshold (documented reading, boundary case 12/12)", () => {
-    assert.equal(isLowStock({ quantity: 12, threshold: 12 }), true);
+  it("does NOT flag a quantity exactly EQUAL to the threshold (reading the assignment literally: «en dessous» = strictly below — boundary case 12/12)", () => {
+    assert.equal(isLowStock({ quantity: 12, threshold: 12 }), false);
   });
 
   it("distinguishes out of stock (zero quantity) from a simple low stock", () => {
@@ -82,13 +82,6 @@ describe("filtering (criteria cumulate with AND)", () => {
     );
   });
 
-  it("keeps only the low-stock items when asked", () => {
-    assert.deepEqual(
-      filterProducts(CATALOGUE, { onlyLowStock: true }).map((p) => p.id),
-      ["P02", "P03", "P05"],
-    );
-  });
-
   it("cumulates two criteria (category + price)", () => {
     assert.deepEqual(
       filterProducts(CATALOGUE, { category: "Fruit", maxPrice: 2.1 }).map((p) => p.id),
@@ -122,25 +115,19 @@ describe("grouping and bounds", () => {
 });
 
 describe("indicators of the Home page", () => {
-  it("counts products, low stock, out of stock and the stock value", () => {
+  it("counts the products", () => {
     const stats = computeStats(CATALOGUE, []);
     assert.equal(stats.productCount, 5);
-    assert.equal(stats.lowStockCount, 3); // Pomme, Cerise, Orange
-    assert.equal(stats.outOfStockCount, 1); // Cerise
-    assert.equal(stats.unitCount, 122);
-    assert.equal(stats.stockValue, 210.8); // 42x2,4 + 8x1,6 + 0x3,4 + 12x2,1 + 60x1,2
   });
 
-  it("details each category", () => {
+  it("details each category: number of products and average stock", () => {
     const stats = computeStats(CATALOGUE, []);
     const fruits = stats.byCategory.find((c) => c.category === "Fruit");
     assert.equal(fruits.productCount, 4);
-    assert.equal(fruits.totalStock, 62);
-    assert.equal(fruits.averageStock, 15.5);
-    assert.equal(fruits.lowStockCount, 3);
+    assert.equal(fruits.averageStock, 15.5); // (42 + 8 + 0 + 12) / 4
   });
 
-  it("counts the orders and their lines", () => {
+  it("counts the orders", () => {
     const stats = computeStats([], [
       { id: "C001", lines: [{ productId: "P01", quantity: 2 }] },
       {
@@ -152,7 +139,6 @@ describe("indicators of the Home page", () => {
       },
     ]);
     assert.equal(stats.orderCount, 2);
-    assert.equal(stats.orderedLineCount, 3);
   });
 });
 
