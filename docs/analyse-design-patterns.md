@@ -79,6 +79,18 @@ Deux séparations structurent tout le code :
 | `docs/diagrammes/02-arbre-composants.puml` `.png` | Arbre des composants avec les valeurs réelles des `props` |
 | `docs/diagrammes/03-sequence-commande.puml` `.png` | Séquence : passer une commande, et l'effet sur les deux autres pages |
 
+**Figure 1 — Diagramme de composants de l'application**
+
+![Diagramme de composants de l'application](diagrammes/01-diagramme-composants.png)
+
+**Figure 2 — Arbre des composants, avec les valeurs réelles des `props`**
+
+![Arbre des composants](diagrammes/02-arbre-composants.png)
+
+**Figure 3 — Séquence : passer une commande et l'effet sur les deux autres pages**
+
+![Séquence de commande](diagrammes/03-sequence-commande.png)
+
 ---
 
 ## 3. Partie 2 — Analyse des design patterns
