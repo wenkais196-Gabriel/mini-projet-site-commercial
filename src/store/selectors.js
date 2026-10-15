@@ -45,7 +45,7 @@ export function usedCategories(products) {
  * @param {import('../data/seed.js').Product[]} products
  * @param {{ search?: string, category?: string, maxPrice?: number|null,
  *           maxQuantity?: number|null, maxThreshold?: number|null,
- *           onlyLowStock?: boolean }} filters
+ *           onlyLowStock?: boolean, onlyOutOfStock?: boolean }} filters
  */
 export function filterProducts(products, filters = {}) {
   const {
@@ -55,6 +55,7 @@ export function filterProducts(products, filters = {}) {
     maxQuantity = null,
     maxThreshold = null,
     onlyLowStock = false,
+    onlyOutOfStock = false,
   } = filters;
 
   const needle = search.trim().toLowerCase();
@@ -69,13 +70,16 @@ export function filterProducts(products, filters = {}) {
        threshold", i.e. exactly the rule the assignment asks to highlight. It reuses
        isLowStock(), so the display and the filter can never diverge. */
     const matchesLowStock = !onlyLowStock || isLowStock(product);
+    /* Second derived criterion, the extreme case of the first: out of stock. */
+    const matchesOutOfStock = !onlyOutOfStock || isOutOfStock(product);
     return (
       matchesSearch &&
       matchesCategory &&
       matchesPrice &&
       matchesQuantity &&
       matchesThreshold &&
-      matchesLowStock
+      matchesLowStock &&
+      matchesOutOfStock
     );
   });
 }

@@ -47,7 +47,7 @@ Deux séparations structurent tout le code :
 | `Input`, `Range`, `Checkbox` | **Standard** | Les trois atomes du cours (exercice 4) : ils ignorent le métier — « j'affiche une valeur, et je préviens quand elle change ». Tous les trois composent le filtre produits, exactement comme la `SearchBar` du cours (Input + Checkbox + Range). |
 | `RowProduct` / `OrderRow` | **Standard** | Présentation pure, pilotés entièrement par leurs `props`. |
 | `QuantitySelector` | **Standard** | Ignore le métier : affiche « une quantité bornée dans [0, max] ». Réutilisable hors du projet. |
-| `ProductFilter` | **Non standard** | Orchestrateur : compose les trois atomes, agrège les 5 critères d'attribut **et** la case « sous le seuil », totalement contrôlé, et **un port de sortie par filtre** — exactement la structure du modèle de composants du cours. |
+| `ProductFilter` | **Non standard** | Orchestrateur : compose les trois atomes, agrège les 5 critères d'attribut **et** les deux critères dérivés (« sous le seuil », « en rupture »), totalement contrôlé, et **un port de sortie par filtre** — exactement la structure du modèle de composants du cours. |
 | `TableProducts` | **Non standard** | Composite : regroupe par catégorie et **fabrique** ses lignes (donnée dérivée calculée au rendu). |
 | `TableCategory` | **Non standard** | Composant « structurel » : il ne connaît qu'un titre de groupe et un nombre d'éléments, jamais un produit. |
 | `KpiCard` | **Non standard** | À facette : `props.children` — la carte fournit le cadre, l'appelant fournit le contenu. |
@@ -282,9 +282,16 @@ connaître l'appelant. `dispatch` joue le rôle d'invocateur.
 
 *Ce que cela donne en démonstration.* On commande, on annule, et l'on voit le stock
 revenir **et** le surlignage disparaître sur la page Produits — l'inverse exact de la
-chaîne de données décrite au § 3.8. L'historique est volontairement limité à la
-dernière opération : un vrai undo/redo multi-niveaux serait disproportionné pour un
-formulaire et difficile à défendre en soutenance.
+chaîne de données décrite au § 3.8.
+
+*Jusqu'où va l'annulation ?* Le bouton annonce et défait **la dernière opération**, mais
+l'historique est une **pile** : l'opération annulée en sort, la précédente devient donc
+la dernière, et l'on peut enchaîner les annulations jusqu'à revenir à l'état de départ
+(deux commandes passées → deux annulations successives ; c'est vérifié par un test
+dédié, `undoes the operations in reverse order`). Ce qui manque délibérément, c'est le
+**redo** : réappliquer une opération annulée demanderait de conserver une seconde pile,
+pour un intérêt nul sur un formulaire de commande. Pour « revenir au point de départ et
+rejouer la démonstration », c'est le bouton « Réinitialiser » qui répond au besoin.
 
 ### 3.8 Observer
 
@@ -405,13 +412,21 @@ avec l'idée pour chacun :
    `RowProduct`. L'extraire dans un HOC composerait plusieurs préoccupations sans
    modifier le composant d'origine — peu de code, mais aucun intérêt tant qu'il n'y a
    qu'une seule décoration à appliquer.
-3. **Historique multi-niveaux** : l'annulation est volontairement limitée à la
-   dernière opération. Un vrai undo/redo (ou un retour à un point précis) serait
-   disproportionné pour un formulaire et difficile à expliquer en soutenance.
+3. **Redo** : l'annulation remonte la pile opération par opération (§ 3.7), mais
+   *réappliquer* une opération annulée n'est pas possible. Cela demanderait de
+   conserver une seconde pile, pour un intérêt nul ici ; « Réinitialiser » couvre le
+   retour au point de départ.
 4. **Filtres de la page Produits** : les 5 attributs sont couverts, le tri par
    colonne et la mémoïsation des valeurs dérivées (chapitre memoisation du cours)
    sont en place.
 5. **Persistance** : aucune, et c'est un choix (voir 4.3).
+6. **Double calcul de `placeOrder`** : la transition est évaluée une première fois dans
+   `saveOrder` — pour pouvoir rendre à la page la commande réellement créée, un
+   `useReducer` ne renvoyant rien — puis une seconde fois dans le reducer. Les deux
+   résultats sont nécessairement identiques (la fonction est pure), donc il n'y a pas de
+   bug, mais le travail est fait deux fois. Le corriger proprement supposerait de faire
+   remonter l'état autrement (référence partagée, ou réducteur qui rend
+   `[état, effet]`) : plus d'infrastructure que ce que ce formulaire justifie.
 
 ### 4.3 Ce que nous avons volontairement refusé
 
@@ -421,8 +436,9 @@ avec l'idée pour chacun :
 - **`localStorage`** : le sujet impose des données en dur ; persister l'état
   aurait masqué le comportement de l'application au rechargement (et donc rendu la
   démonstration moins lisible).
-- **Un vrai système d'annulation multi-niveaux** : disproportionné pour un
-  formulaire, et source de bugs d'historique difficiles à expliquer en soutenance.
+- **Un redo** (réappliquer une opération annulée) : la pile d'annulation, elle, existe
+  et se remonte opération par opération (§ 3.7). Entretenir une seconde pile pour un
+  formulaire de commande serait du poids sans usage.
 - **Les fonctions hors sujet**, retirées après une relecture du sujet : alertes de
   stock sur la page Accueil, colonne « État » dans le tableau des produits, route de
   repli pour les URL inconnues. Le sujet ne demande sur l'accueil que des indicateurs,
@@ -443,7 +459,8 @@ littéralement demandés. Ils sont listés ici, avec leur raison d'être :
 | Total de la commande et sous-total par ligne | conservés | un formulaire qui affiche des quantités sans total serait incomplet à l'usage ; la « forme libre » du sujet le permet |
 | Compteur « N produit(s) affiché(s) sur M » | conservé | retour d'information du filtre, sans effet sur les données |
 | `CATEGORIES` (`seed.js`) | conservé, **non utilisé** | liste de référence du catalogue (voir le commentaire du fichier) |
-| Case « Uniquement les produits sous le seuil » (page Produits) | conservée | ce n'est pas un filtre sur un **attribut** mais sur la **règle centrale du sujet** (quantité en dessous du seuil) : elle isole exactement ce que la page surligne, et elle donne un emploi réel au troisième atome du cours (`Checkbox`) — notre `ProductFilter` devient ainsi superposable à la `SearchBar` de l'exercice 4 |
+| Cases « sous le seuil » et « en rupture » (page Produits) | conservées | ce ne sont pas des filtres sur un **attribut** mais sur la **règle centrale du sujet** (quantité en dessous du seuil) et sur son cas extrême (0). Elles isolent exactement ce que la page surligne, réutilisent `isLowStock` / `isOutOfStock` (donc l'affichage et le filtre ne peuvent pas diverger) et donnent un emploi réel au troisième atome du cours (`Checkbox`) : `ProductFilter` devient ainsi superposable à la `SearchBar` de l'exercice 4 |
+| Ligne rouge pour la rupture (page Produits) | conservée | la rupture est un **sous-cas** du surlignage demandé (0 est toujours sous le seuil) ; lui donner sa propre couleur sert la lisibilité sans ajouter ni retirer d'information — la ligne reste surlignée au sens du sujet |
 
 **Aucune ressource externe à l'exécution.** La feuille de style Bootstrap (5.3.8, la
 version du cours) est **versionnée dans le dépôt** (`public/vendor/bootstrap.min.css`)
