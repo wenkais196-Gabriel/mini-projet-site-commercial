@@ -175,6 +175,24 @@ const clearFilters = async (page) => {
   );
   await clearFilters(page);
 
+  /* La case a cocher : un critere DERIVE (la regle meme du sujet), pas un attribut.
+     Elle doit filtrer exactement ce que la page surligne — cas limite compris. */
+  await page.check("#filter-low-stock");
+  await page.waitForTimeout(200);
+  ok(
+    "Products: la case « sous le seuil » ne garde que les produits sous le seuil",
+    (await productRow(page, "Banane").count()) === 0 &&
+      (await productRow(page, "Pomme").count()) === 1,
+    "Banane (42 pour un seuil de 15) exclue, Pomme (8 pour 20) conservee",
+  );
+  ok(
+    "Products: la case « sous le seuil » exclut le cas limite (Orange 12/12)",
+    (await productRow(page, "Orange").count()) === 0,
+    "Orange a exactement atteint son seuil",
+  );
+  await page.uncheck("#filter-low-stock");
+  await page.waitForTimeout(150);
+
   // Sorting (added for issue #2)
   await page.click('button:has-text("Prix")');
   await page.waitForTimeout(200);
