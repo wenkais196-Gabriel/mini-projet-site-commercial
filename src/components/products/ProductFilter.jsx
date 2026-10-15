@@ -1,12 +1,13 @@
 import { Input } from "../form/Input.jsx";
+import { Checkbox } from "../form/Checkbox.jsx";
 import { Range } from "../form/Range.jsx";
 
 /**
  * ProductFilter — NON-STANDARD "orchestrator" component.
  *
- * Equivalence with the course: this is the SearchBar of exercise 4, extended to the
- * five attributes of a product. It is fully CONTROLLED — it stores no value — and
- * it composes the reusable atom components (Input, Range).
+ * Equivalence with the course: this is the SearchBar of exercise 4 — Input + Checkbox +
+ * Range — extended to the five attributes of a product. It is fully CONTROLLED (it
+ * stores no value) and it composes the three reusable atom components.
  *
  * ONE CALLBACK PER FILTER, exactly like the course's component model (which gives
  * one output port per filter). The naming follows the React convention
@@ -17,7 +18,7 @@ import { Range } from "../form/Range.jsx";
  *
  * @param {{
  *   values: { search: string, category: string, maxPrice: number|null,
- *             maxQuantity: number|null, maxThreshold: number|null },
+ *             maxQuantity: number|null, maxThreshold: number|null, onlyLowStock: boolean },
  *   bounds: { price: [number, number], quantity: [number, number], threshold: [number, number] },
  *   categories: string[],
  *   resultCount: number,
@@ -27,6 +28,7 @@ import { Range } from "../form/Range.jsx";
  *   onMaxPriceChange: (value: number|null) => void,
  *   onMaxQuantityChange: (value: number|null) => void,
  *   onMaxThresholdChange: (value: number|null) => void,
+ *   onOnlyLowStockChange: (value: boolean) => void,
  *   onReset: () => void
  * }} props
  */
@@ -41,6 +43,7 @@ export function ProductFilter({
   onMaxPriceChange,
   onMaxQuantityChange,
   onMaxThresholdChange,
+  onOnlyLowStockChange,
   onReset,
 }) {
   const noFilter =
@@ -48,7 +51,8 @@ export function ProductFilter({
     values.category === "" &&
     values.maxPrice === null &&
     values.maxQuantity === null &&
-    values.maxThreshold === null;
+    values.maxThreshold === null &&
+    !values.onlyLowStock;
 
   /** Reaching the maximum of a slider removes the filter. */
   const asFilter = (value, maximum) => (value >= maximum ? null : value);
@@ -117,6 +121,15 @@ export function ProductFilter({
               min={bounds.threshold[0]}
               max={bounds.threshold[1]}
               onChange={(value) => onMaxThresholdChange(asFilter(value, bounds.threshold[1]))}
+            />
+          </div>
+
+          <div className="col-md-4 d-flex align-items-end">
+            <Checkbox
+              id="filter-low-stock"
+              label="Uniquement les produits sous le seuil"
+              checked={values.onlyLowStock}
+              onChange={onOnlyLowStockChange}
             />
           </div>
         </div>

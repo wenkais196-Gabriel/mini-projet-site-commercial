@@ -44,7 +44,8 @@ export function usedCategories(products) {
  * Every criterion is optional and they CUMULATE (logical AND).
  * @param {import('../data/seed.js').Product[]} products
  * @param {{ search?: string, category?: string, maxPrice?: number|null,
- *           maxQuantity?: number|null, maxThreshold?: number|null }} filters
+ *           maxQuantity?: number|null, maxThreshold?: number|null,
+ *           onlyLowStock?: boolean }} filters
  */
 export function filterProducts(products, filters = {}) {
   const {
@@ -53,6 +54,7 @@ export function filterProducts(products, filters = {}) {
     maxPrice = null,
     maxQuantity = null,
     maxThreshold = null,
+    onlyLowStock = false,
   } = filters;
 
   const needle = search.trim().toLowerCase();
@@ -63,12 +65,17 @@ export function filterProducts(products, filters = {}) {
     const matchesPrice = maxPrice === null || product.price <= maxPrice;
     const matchesQuantity = maxQuantity === null || product.quantity <= maxQuantity;
     const matchesThreshold = maxThreshold === null || product.threshold <= maxThreshold;
+    /* Derived criterion (not an attribute): "products whose quantity is below their
+       threshold", i.e. exactly the rule the assignment asks to highlight. It reuses
+       isLowStock(), so the display and the filter can never diverge. */
+    const matchesLowStock = !onlyLowStock || isLowStock(product);
     return (
       matchesSearch &&
       matchesCategory &&
       matchesPrice &&
       matchesQuantity &&
-      matchesThreshold
+      matchesThreshold &&
+      matchesLowStock
     );
   });
 }
