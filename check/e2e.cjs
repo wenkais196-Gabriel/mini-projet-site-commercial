@@ -81,6 +81,17 @@ const clearFilters = async (page) => {
     if (message.type() === "warning") warnings.push(message.text());
   });
 
+  /* L'application ne doit dependre d'AUCUNE ressource externe (AGENTS.md 1.4) : la
+     feuille de style Bootstrap est servie depuis public/vendor/. On recolte toutes les
+     requetes pour le verifier a la fin. */
+  const externalRequests = [];
+  page.on("request", (request) => {
+    const url = request.url();
+    if (!url.includes("localhost:5173") && !url.startsWith("data:") && !url.startsWith("blob:")) {
+      externalRequests.push(url);
+    }
+  });
+
   /* ---------- 1. Home page --------------------------------------------- */
   await page.goto(BASE, { waitUntil: "domcontentloaded" });
   await page.waitForSelector(".kpi");
@@ -306,12 +317,17 @@ const clearFilters = async (page) => {
     resetKpis.find((kpi) => kpi.label === "Commandes")?.value === "3",
   );
 
-  /* ---------- 8. Console health ---------------------------------------- */
+  /* ---------- 8. Console health and offline self-sufficiency -------------- */
   ok("No JavaScript error in the console", errors.length === 0, errors.join(" || ") || "none");
   ok(
     "No warning in the console",
     warnings.length === 0,
     warnings.length ? [...new Set(warnings)].join(" || ") : "none",
+  );
+  ok(
+    "Aucune ressource externe chargee (l'application tient hors ligne)",
+    externalRequests.length === 0,
+    externalRequests.length ? [...new Set(externalRequests)].join(" || ") : "aucune",
   );
 
   await browser.close();
