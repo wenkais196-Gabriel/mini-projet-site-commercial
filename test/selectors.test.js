@@ -82,6 +82,31 @@ describe("filtering (criteria cumulate with AND)", () => {
     );
   });
 
+  it("filters on the maximum quantity (bound included)", () => {
+    assert.deepEqual(
+      filterProducts(CATALOGUE, { maxQuantity: 12 }).map((p) => p.id),
+      ["P02", "P03", "P05"], // quantites 8, 0 et 12
+    );
+  });
+
+  it("filters on the maximum threshold (bound included)", () => {
+    assert.deepEqual(
+      filterProducts(CATALOGUE, { maxThreshold: 15 }).map((p) => p.id),
+      ["P01", "P03", "P05"], // seuils 15, 10 et 12
+    );
+  });
+
+  it("cumulates the three numeric criteria", () => {
+    assert.deepEqual(
+      filterProducts(CATALOGUE, {
+        maxPrice: 2.4,
+        maxQuantity: 12,
+        maxThreshold: 20,
+      }).map((p) => p.id),
+      ["P02", "P05"], // Pomme (1,60 / 8 / 20) et Orange (2,10 / 12 / 12)
+    );
+  });
+
   it("cumulates two criteria (category + price)", () => {
     assert.deepEqual(
       filterProducts(CATALOGUE, { category: "Fruit", maxPrice: 2.1 }).map((p) => p.id),

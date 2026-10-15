@@ -427,6 +427,28 @@ avec l'idée pour chacun :
   stock sur la page Accueil, colonne « État » dans le tableau des produits, filtre
   « alertes seulement », route de repli pour les URL inconnues. Le sujet ne demande
   sur l'accueil que des indicateurs, la synthèse par catégorie et le nombre de
-  commandes passées. Les deux seules fonctions conservées au-delà de l'énoncé sont
-  « Annuler » et « Réinitialiser » : ce sont les démonstrations concrètes de Command
-  et de State, dont l'analyse fait l'objet de la partie 2.
+  commandes passées.
+- **Rien d'autre** : les rares éléments conservés au-delà de l'énoncé sont listés et
+  justifiés au § 4.4 — un écart assumé et écrit vaut mieux qu'un écart caché.
+
+### 4.4 Fonctions conservées au-delà de l'énoncé
+
+Après le resserrement décrit au § 4.3, il reste quelques éléments qui ne sont pas
+littéralement demandés. Ils sont listés ici, avec leur raison d'être :
+
+| Élément | Statut | Pourquoi on le garde |
+|---|---|---|
+| « Annuler » et « Réinitialiser » (barre de navigation) | conservés | ce sont les démonstrations concrètes de Command et de State, dont l'analyse fait l'objet de la partie 2 |
+| Tri par colonne (Nom, Prix, Quantité) sur Produits | conservé | le sujet demande des **filtres** sur les attributs ; le tri offre une seconde lecture de la même liste, sans rien retirer à la conformité |
+| Regroupement des lignes par catégorie (`TableCategory`) | conservé | choix de présentation, et surtout l'exemple de **composant composite** de la partie 1 |
+| Total de la commande et sous-total par ligne | conservés | un formulaire qui affiche des quantités sans total serait incomplet à l'usage ; la « forme libre » du sujet le permet |
+| Compteur « N produit(s) affiché(s) sur M » | conservé | retour d'information du filtre, sans effet sur les données |
+| `CATEGORIES` (`seed.js`) | conservé, **non utilisé** | liste de référence du catalogue (voir le commentaire du fichier) |
+| `Checkbox` (`components/form/`) | conservé, **non branché** | atome du modèle de composants du cours (exercice 4), conservé pour rester aligné sur ce modèle |
+
+**Dépendances externes : deux, et pas une de plus.** `react-router-dom` (imposé par le
+sujet) et la feuille de style **Bootstrap chargée par CDN** — c'est la convention du
+cours depuis l'exercice 4, inscrite comme contrainte dans `AGENTS.md` § 1.4. Conséquence
+assumée : la **mise en forme** suppose un accès réseau ; le **contenu et les
+fonctionnalités restent entièrement locaux** (aucune donnée ne vient du réseau, ce qui
+est l'exigence réelle du sujet : « pas de serveur de données »).
