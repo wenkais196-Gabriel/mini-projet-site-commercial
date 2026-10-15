@@ -37,11 +37,6 @@ async function readKpis(page) {
 
 const productRow = (page, name) => page.locator("tbody tr").filter({ hasText: name }).first();
 
-/* Labels are accented: comparison drops accents so the check does not depend on the
-   keyboard of whoever writes it. */
-const unaccent = (text) =>
-  text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-
 const displayedStatus = (page) => page.locator('[data-testid="order-status"]').innerText();
 
 (async () => {
@@ -65,7 +60,7 @@ const displayedStatus = (page) => page.locator('[data-testid="order-status"]').i
 
   const firstKpis = await readKpis(page);
   const ordersBefore = firstKpis.find((kpi) => kpi.label === "Commandes")?.value;
-  ok("Home: 4 indicators displayed", firstKpis.length === 4, `${firstKpis.length} cards`);
+  ok("Home: 2 indicators displayed", firstKpis.length === 2, `${firstKpis.length} cards`);
   ok("Home: 3 initial orders", ordersBefore === "3", `value = ${ordersBefore}`);
   ok("Home: breakdown of the 3 categories", (await page.locator("tbody tr").count()) === 3);
   await page.screenshot({ path: "check/01-home.png", fullPage: true });
@@ -110,11 +105,16 @@ const displayedStatus = (page) => page.locator('[data-testid="order-status"]').i
   await page.click('button:has-text("Effacer le tri")');
   await page.waitForTimeout(150);
 
-  await page.check("#filter-low-stock");
-  await page.waitForTimeout(200);
-  ok("Products: the « alertes » filter keeps only the low-stock items", (await page.locator("tbody tr").count()) < totalRows);
-  await page.uncheck("#filter-low-stock");
-  await page.waitForTimeout(150);
+  // Reading of the assignment applied literally: « en dessous du seuil » = strictly
+  // below, therefore the boundary case (Orange, 12/12) must NOT be flagged.
+  ok(
+    "Products: Orange (12/12, exactly at the threshold) is NOT highlighted",
+    !((await productRow(page, "Orange").getAttribute("class")) ?? "").includes("alert-row"),
+  );
+  ok(
+    "Products: Pomme (8/20, strictly below) IS highlighted",
+    ((await productRow(page, "Pomme").getAttribute("class")) ?? "").includes("alert-row"),
+  );
   await page.screenshot({ path: "check/02-products.png", fullPage: true });
 
   /* ---------- 3. Order page: the state machine -------------------------- */
@@ -150,10 +150,10 @@ const displayedStatus = (page) => page.locator('[data-testid="order-status"]').i
     `field = ${await quantityField.inputValue()}`,
   );
 
-  await quantityField.fill("12");
+  await quantityField.fill("13");
   await page.waitForTimeout(200);
   const cardHeader = (await page.locator(".card-header span.small").innerText()).trim();
-  ok("Order: total recomputed (12 × 3,75 = 45,00 €)", cardHeader.includes("45,00"), cardHeader);
+  ok("Order: total recomputed (13 × 3,75 = 48,75 €)", cardHeader.includes("48,75"), cardHeader);
   await page.screenshot({ path: "check/04-order-filled.png", fullPage: true });
 
   await page.getByRole("button", { name: "Valider la commande" }).click();
@@ -164,8 +164,8 @@ const displayedStatus = (page) => page.locator('[data-testid="order-status"]').i
 
   const recapLines = await page.locator(".alert-success li").allInnerTexts();
   ok(
-    "Order: recap of the placed order (12 Poivron = 45,00 €)",
-    recapLines.length === 1 && /12\s*[×x]\s*Poivron/.test(recapLines[0]) && /45,00/.test(recapLines[0]),
+    "Order: recap of the placed order (13 Poivron = 48,75 €)",
+    recapLines.length === 1 && /13\s*[×x]\s*Poivron/.test(recapLines[0]) && /48,75/.test(recapLines[0]),
     recapLines.join(" | ") || "(no line)",
   );
   ok("Order: form reset", (await page.inputValue("#customer-last-name")) === "");
@@ -183,11 +183,9 @@ const displayedStatus = (page) => page.locator('[data-testid="order-status"]').i
   const pepperAfter = productRow(page, "Poivron");
   const classAfter = (await pepperAfter.getAttribute("class")) ?? "";
   const quantityAfter = (await pepperAfter.locator("td").nth(3).innerText()).trim();
-  const badgeAfter = (await pepperAfter.locator("td").nth(5).innerText()).trim();
 
-  ok("Products: stock decremented by the order (22 -> 10)", quantityAfter === "10", `quantity = ${quantityAfter}`);
+  ok("Products: stock decremented by the order (22 -> 9)", quantityAfter === "9", `quantity = ${quantityAfter}`);
   ok("Products: the row becomes highlighted", classAfter.includes("alert-row"));
-  ok("Products: status badge updated", unaccent(badgeAfter).includes("reapprovisionner"), badgeAfter);
   await page.screenshot({ path: "check/06-products-after-order.png", fullPage: true });
 
   /* ---------- 5. Back to Home ------------------------------------------ */
@@ -221,7 +219,7 @@ const displayedStatus = (page) => page.locator('[data-testid="order-status"]').i
   await page.waitForSelector("tbody tr");
   const pepperRestored = productRow(page, "Poivron");
   ok(
-    "Undo: the stock is given back (10 -> 22)",
+    "Undo: the stock is given back (9 -> 22)",
     (await pepperRestored.locator("td").nth(3).innerText()).trim() === "22",
   );
   ok(

@@ -15,13 +15,13 @@ card "Layout\nstats.orderCount = 3" as Layout {
 }
 
 card "HomePage\netat : aucun" as Accueil {
-  card "KpiCard x4\n{ label, value, variant }" as K1
+  card "KpiCard x2\n{ label, value }" as K1
   card "table synthese\n{ byCategory[] }" as K2
 }
 
 card "ProductsPage\netat : filters, sort" as Produits {
-  card "ProductFilter\n{ values, bounds, categories, resultCount, totalCount,\n  onSearchChange, onCategoryChange, onMaxPriceChange,\n  onMaxQuantityChange, onMaxThresholdChange, onOnlyLowStockChange, onReset }" as F {
-    card "Input / Checkbox / Range\n{ value, onChange }" as Atomes
+  card "ProductFilter\n{ values, bounds, categories, resultCount, totalCount,\n  onSearchChange, onCategoryChange, onMaxPriceChange,\n  onMaxQuantityChange, onMaxThresholdChange, onReset }" as F {
+    card "Input / Range\n{ value, onChange }" as Atomes
   }
   card "TableProducts\n{ products: 13 filtres }" as T {
     card "TableCategory\n{ category, count }" as C

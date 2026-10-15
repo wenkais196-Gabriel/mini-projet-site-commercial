@@ -1,6 +1,5 @@
 import { KpiCard } from "../components/indicators/KpiCard.jsx";
 import { useData } from "../store/DataContext.jsx";
-import { formatPrice } from "../store/selectors.js";
 
 export function HomePage() {
   const { stats } = useData();
@@ -16,35 +15,11 @@ export function HomePage() {
 
       {/* --- Indicators ------------------------------------------------ */}
       <div className="row g-3 mb-4">
-        <div className="col-6 col-lg-3">
-          <KpiCard
-            label="Produits"
-            value={stats.productCount}
-            detail={`${stats.unitCount} unités en stock`}
-          />
+        <div className="col-6">
+          <KpiCard label="Produits" value={stats.productCount} />
         </div>
-        <div className="col-6 col-lg-3">
-          <KpiCard
-            label="Commandes"
-            value={stats.orderCount}
-            detail={`${stats.orderedLineCount} lignes commandées`}
-          />
-        </div>
-        <div className="col-6 col-lg-3">
-          <KpiCard
-            label="À réapprovisionner"
-            variant={stats.lowStockCount > 0 ? "alert" : "success"}
-            value={stats.lowStockCount}
-            detail={`dont ${stats.outOfStockCount} en rupture totale`}
-          />
-        </div>
-        <div className="col-6 col-lg-3">
-          <KpiCard
-            label="Valeur du stock"
-            variant="neutral"
-            value={formatPrice(stats.stockValue)}
-            detail="prix × quantité disponible"
-          />
+        <div className="col-6">
+          <KpiCard label="Commandes" value={stats.orderCount} />
         </div>
       </div>
 
@@ -58,9 +33,6 @@ export function HomePage() {
                 <th scope="col">Catégorie</th>
                 <th scope="col" className="text-end">Nombre de produits</th>
                 <th scope="col" className="text-end">Stock moyen</th>
-                <th scope="col" className="text-end">Stock total</th>
-                <th scope="col" className="text-end">Prix moyen</th>
-                <th scope="col" className="text-end">Alertes de stock</th>
               </tr>
             </thead>
             <tbody>
@@ -69,17 +41,6 @@ export function HomePage() {
                   <td className="fw-semibold">{line.category}</td>
                   <td className="text-end">{line.productCount}</td>
                   <td className="text-end">{line.averageStock}</td>
-                  <td className="text-end">{line.totalStock}</td>
-                  <td className="text-end font-monospace">
-                    {formatPrice(line.averagePrice)}
-                  </td>
-                  <td className="text-end">
-                    {line.lowStockCount > 0 ? (
-                      <span className="badge badge-alert">{line.lowStockCount}</span>
-                    ) : (
-                      <span className="text-muted">0</span>
-                    )}
-                  </td>
                 </tr>
               ))}
             </tbody>

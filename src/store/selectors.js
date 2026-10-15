@@ -11,22 +11,18 @@
      data in the model: the rule is therefore written only once.
    ========================================================================== */
 
-/* Modelling choice to justify in the report:
-   "the quantity is below the threshold" — we INCLUDE equality (quantity ≤
-   threshold). The other possible reading is strictly lower. The boundary case is
-   deliberately present in the seed data (Orange, 12/12). */
-export const THRESHOLD_INCLUSIVE = true;
-
-/** A product whose stock is exactly 0 is out of stock (a special case of the above). */
-export function isOutOfStock(product) {
-  return product.quantity === 0;
+/* Reading of the assignment, applied literally: "surlignage des produits dont la
+   quantite est EN DESSOUS du seuil" → the comparison is STRICT (quantity <
+   threshold). A product whose stock is exactly equal to its threshold is therefore
+   NOT flagged. The boundary case is deliberately present in the seed data
+   (Orange, 12/12) and covered by a test, so that the choice stays visible. */
+export function isLowStock(product) {
+  return product.quantity < product.threshold;
 }
 
-/** The product must be reordered: its quantity has reached (or passed) the threshold. */
-export function isLowStock(product) {
-  return THRESHOLD_INCLUSIVE
-    ? product.quantity <= product.threshold
-    : product.quantity < product.threshold;
+/** A product whose stock is exactly 0 is out of stock: no order line can be taken. */
+export function isOutOfStock(product) {
+  return product.quantity === 0;
 }
 
 /** French display of a price: 2.4 → « 2,40 € ». */
@@ -48,8 +44,7 @@ export function usedCategories(products) {
  * Every criterion is optional and they CUMULATE (logical AND).
  * @param {import('../data/seed.js').Product[]} products
  * @param {{ search?: string, category?: string, maxPrice?: number|null,
- *           maxQuantity?: number|null, maxThreshold?: number|null,
- *           onlyLowStock?: boolean }} filters
+ *           maxQuantity?: number|null, maxThreshold?: number|null }} filters
  */
 export function filterProducts(products, filters = {}) {
   const {
@@ -58,7 +53,6 @@ export function filterProducts(products, filters = {}) {
     maxPrice = null,
     maxQuantity = null,
     maxThreshold = null,
-    onlyLowStock = false,
   } = filters;
 
   const needle = search.trim().toLowerCase();
@@ -69,14 +63,12 @@ export function filterProducts(products, filters = {}) {
     const matchesPrice = maxPrice === null || product.price <= maxPrice;
     const matchesQuantity = maxQuantity === null || product.quantity <= maxQuantity;
     const matchesThreshold = maxThreshold === null || product.threshold <= maxThreshold;
-    const matchesLowStock = !onlyLowStock || isLowStock(product);
     return (
       matchesSearch &&
       matchesCategory &&
       matchesPrice &&
       matchesQuantity &&
-      matchesThreshold &&
-      matchesLowStock
+      matchesThreshold
     );
   });
 }
@@ -131,28 +123,13 @@ export function computeStats(products, orders) {
     return {
       category: group.category,
       productCount: group.products.length,
-      totalStock,
       averageStock: round(totalStock / group.products.length),
-      lowStockCount: group.products.filter(isLowStock).length,
-      averagePrice: round(
-        group.products.reduce((sum, product) => sum + product.price, 0) /
-          group.products.length,
-        2,
-      ),
     };
   });
 
   return {
     productCount: products.length,
-    unitCount: products.reduce((sum, product) => sum + product.quantity, 0),
     orderCount: orders.length,
-    orderedLineCount: orders.reduce((sum, order) => sum + order.lines.length, 0),
-    lowStockCount: products.filter(isLowStock).length,
-    outOfStockCount: products.filter(isOutOfStock).length,
-    stockValue: round(
-      products.reduce((sum, product) => sum + product.price * product.quantity, 0),
-      2,
-    ),
     byCategory,
   };
 }

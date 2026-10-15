@@ -19,8 +19,8 @@ package "src/pages" #E8F5E9 {
 package "src/components" #EAF1F8 {
   component "Layout\n(gabarit des 3 pages)" as Layout
   component "form/Input" as Input <<reutilisable>>
-  component "form/Checkbox" as Check <<reutilisable>>
   component "form/Range" as Range <<reutilisable>>
+  component "form/Checkbox" as Check <<disponible, non utilise>>
   component "KpiCard" as KPI
   component "ProductFilter" as Filtre
   component "TableProducts" as Table
@@ -53,7 +53,6 @@ Accueil --> KPI
 Produits --> Filtre
 Produits --> Table
 Filtre --> Input
-Filtre --> Check
 Filtre --> Range
 Table --> Cat
 Table --> Row : product
