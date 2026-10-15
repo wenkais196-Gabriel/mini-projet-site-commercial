@@ -121,6 +121,22 @@ describe("filtering (criteria cumulate with AND)", () => {
     );
   });
 
+  it("keeps only the out-of-stock products when asked", () => {
+    assert.deepEqual(
+      filterProducts(CATALOGUE, { onlyOutOfStock: true }).map((p) => p.id),
+      ["P03"], // Cerise, quantite 0
+    );
+  });
+
+  it("crossing the two derived criteria keeps the out-of-stock products", () => {
+    assert.deepEqual(
+      filterProducts(CATALOGUE, { onlyLowStock: true, onlyOutOfStock: true }).map(
+        (p) => p.id,
+      ),
+      ["P03"], // la rupture est un sous-cas du seuil
+    );
+  });
+
   it("cumulates two criteria (category + price)", () => {
     assert.deepEqual(
       filterProducts(CATALOGUE, { category: "Fruit", maxPrice: 2.1 }).map((p) => p.id),

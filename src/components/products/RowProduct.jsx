@@ -1,4 +1,4 @@
-import { isLowStock, formatPrice } from "../../store/selectors.js";
+import { isLowStock, isOutOfStock, formatPrice } from "../../store/selectors.js";
 
 /**
  * RowProduct — one row of the products table (reused from exercise 4).
@@ -8,14 +8,21 @@ import { isLowStock, formatPrice } from "../../store/selectors.js";
  * "standard" component of the assignment; the non-standard ones are ProductFilter,
  * TableProducts and KpiCard.
  *
- * It applies the single rule the assignment requires: the row is highlighted when
- * the quantity is strictly below the restocking threshold.
+ * It applies the single rule the assignment requires: the row is highlighted when the
+ * quantity is strictly below the restocking threshold. Out of stock (quantity 0) is an
+ * extreme case of that rule and gets its own colour.
  *
  * @param {{ product: import('../../data/seed.js').Product }} props
  */
+function rowClassOf(product) {
+  if (isOutOfStock(product)) return "out-of-stock-row";
+  if (isLowStock(product)) return "alert-row";
+  return undefined;
+}
+
 export function RowProduct({ product }) {
   return (
-    <tr className={isLowStock(product) ? "alert-row" : undefined}>
+    <tr className={rowClassOf(product)}>
       <td className="fw-semibold">{product.name}</td>
       <td>
         <span className="badge text-bg-light">{product.category}</span>

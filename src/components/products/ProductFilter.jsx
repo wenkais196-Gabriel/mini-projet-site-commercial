@@ -18,7 +18,8 @@ import { Range } from "../form/Range.jsx";
  *
  * @param {{
  *   values: { search: string, category: string, maxPrice: number|null,
- *             maxQuantity: number|null, maxThreshold: number|null, onlyLowStock: boolean },
+ *             maxQuantity: number|null, maxThreshold: number|null,
+ *             onlyLowStock: boolean, onlyOutOfStock: boolean },
  *   bounds: { price: [number, number], quantity: [number, number], threshold: [number, number] },
  *   categories: string[],
  *   resultCount: number,
@@ -29,6 +30,7 @@ import { Range } from "../form/Range.jsx";
  *   onMaxQuantityChange: (value: number|null) => void,
  *   onMaxThresholdChange: (value: number|null) => void,
  *   onOnlyLowStockChange: (value: boolean) => void,
+ *   onOnlyOutOfStockChange: (value: boolean) => void,
  *   onReset: () => void
  * }} props
  */
@@ -44,6 +46,7 @@ export function ProductFilter({
   onMaxQuantityChange,
   onMaxThresholdChange,
   onOnlyLowStockChange,
+  onOnlyOutOfStockChange,
   onReset,
 }) {
   const noFilter =
@@ -52,7 +55,8 @@ export function ProductFilter({
     values.maxPrice === null &&
     values.maxQuantity === null &&
     values.maxThreshold === null &&
-    !values.onlyLowStock;
+    !values.onlyLowStock &&
+    !values.onlyOutOfStock;
 
   /** Reaching the maximum of a slider removes the filter. */
   const asFilter = (value, maximum) => (value >= maximum ? null : value);
@@ -124,12 +128,20 @@ export function ProductFilter({
             />
           </div>
 
-          <div className="col-md-4 d-flex align-items-end">
+          {/* Les deux criteres derives partagent une seule cellule : la grille reste
+              alignee sur 3 colonnes et les deux cases se lisent ensemble. */}
+          <div className="col-md-4 d-flex flex-column justify-content-end gap-2">
             <Checkbox
               id="filter-low-stock"
               label="Uniquement les produits sous le seuil"
               checked={values.onlyLowStock}
               onChange={onOnlyLowStockChange}
+            />
+            <Checkbox
+              id="filter-out-of-stock"
+              label="Uniquement les produits en rupture"
+              checked={values.onlyOutOfStock}
+              onChange={onOnlyOutOfStockChange}
             />
           </div>
         </div>
