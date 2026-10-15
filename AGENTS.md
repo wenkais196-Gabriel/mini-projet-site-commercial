@@ -35,6 +35,8 @@ avec lui, on le signale au lieu de contourner.
 6. Toute règle métier nouvelle arrive **avec son test** dans `test/`, et vit dans un
    module **pur** (aucun JSX, aucun hook) : c'est ce qui rend l'état vérifiable sans
    navigateur. Un composant ne contient que de l'assemblage.
+7. Branches : `feat/…` pour le travail courant, `dev` pour l'intégration, `main` pour
+   l'état livrable. `dev` et `main` n'acceptent **aucun push direct**.
 
 ## 3. Langue et style
 
@@ -53,7 +55,7 @@ avec lui, on le signale au lieu de contourner.
 
 ## 5. Interdits explicites
 
-- Pousser directement sur `main`.
+- Pousser directement sur `main` ou sur `dev` : les deux passent par une PR.
 - Commiter `node_modules/`, `dist/`, un `.zip`, un `.pdf` de rendu intermédiaire.
 - Renommer ou déplacer un fichier dont on n'est pas propriétaire.
 - Ajouter une dépendance npm sans accord préalable.
