@@ -35,9 +35,38 @@ async function readKpis(page) {
   );
 }
 
-const productRow = (page, name) => page.locator("tbody tr").filter({ hasText: name }).first();
+/* Cible la PREMIERE cellule : « Orange » ne doit pas attraper « Jus d'orange ».
+   Pas d'ancre en fin de motif : le `textContent` de la cellule de la page Commande est
+   « PoivronLégume » (deux <div> adjacents, donc sans espace). */
+const productRow = (page, name) =>
+  page
+    .locator("tbody tr")
+    .filter({ has: page.locator("td:first-child", { hasText: new RegExp(`^${name}`) }) })
+    .first();
 
 const displayedStatus = (page) => page.locator('[data-testid="order-status"]').innerText();
+
+/* Les curseurs sont des <input type="range"> controles par React : leur affecter
+   `.value` ne suffit pas (React garde son propre suivi de valeur). On passe donc par
+   le setter natif, puis on emet l'evenement `input` comme le ferait l'utilisateur. */
+const setRange = (page, selector, value) =>
+  page.$eval(
+    selector,
+    (element, next) => {
+      const setter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        "value",
+      ).set;
+      setter.call(element, String(next));
+      element.dispatchEvent(new Event("input", { bubbles: true }));
+    },
+    value,
+  );
+
+const clearFilters = async (page) => {
+  await page.click('button:has-text("Réinitialiser les filtres")');
+  await page.waitForTimeout(150);
+};
 
 (async () => {
   const browser = await chromium.launch({ channel: "msedge" });
@@ -94,8 +123,46 @@ const displayedStatus = (page) => page.locator('[data-testid="order-status"]').i
   await page.waitForTimeout(200);
   ok("Products: the « catégorie » filter isolates the drinks", (await page.locator("tbody tr").count()) === 4);
 
-  await page.click('button:has-text("Réinitialiser les filtres")');
-  await page.waitForTimeout(150);
+  await clearFilters(page);
+
+  /* Les trois curseurs : les 5 attributs du sujet doivent avoir leur filtre, pas
+     seulement le nom et la categorie. Bornes incluses (un filtre « maximum »). */
+  await setRange(page, "#filter-max-price", 2);
+  await page.waitForTimeout(200);
+  ok(
+    "Products: le curseur « prix maximum » filtre",
+    (await productRow(page, "Kiwi").count()) === 0,
+    "Kiwi (4,55) hors du filtre a 2,00",
+  );
+  await clearFilters(page);
+
+  await setRange(page, "#filter-max-quantity", 12);
+  await page.waitForTimeout(200);
+  ok(
+    "Products: le curseur « quantité maximum » filtre",
+    (await productRow(page, "Banane").count()) === 0,
+    "Banane (42) hors du filtre a 12",
+  );
+  ok(
+    "Products: le filtre « quantité maximum » garde la borne incluse",
+    (await productRow(page, "Orange").count()) === 1,
+    "Orange (12) reste affiche",
+  );
+  await clearFilters(page);
+
+  await setRange(page, "#filter-max-threshold", 25);
+  await page.waitForTimeout(200);
+  ok(
+    "Products: le curseur « seuil maximum » filtre",
+    (await productRow(page, "Chou").count()) === 0,
+    "Chou (seuil 30) hors du filtre a 25",
+  );
+  ok(
+    "Products: le filtre « seuil maximum » garde la borne incluse",
+    (await productRow(page, "Carotte").count()) === 1,
+    "Carotte (seuil 25) reste affiche",
+  );
+  await clearFilters(page);
 
   // Sorting (added for issue #2)
   await page.click('button:has-text("Prix")');

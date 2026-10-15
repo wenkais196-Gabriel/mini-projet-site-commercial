@@ -14,7 +14,11 @@
 /** @typedef {{ productId: string, quantity: number }} OrderLine */
 /** @typedef {{ id: string, date: string, customer: { firstName: string, lastName: string, email: string }, lines: OrderLine[] }} Order */
 
-/** Known categories (used by the filter drop-down). */
+/* Categories of the catalogue. This is REFERENCE DATA: the exhaustive list the seed
+   must cover. It is deliberately not used to build the drop-down of the Products page
+   — that one is built from the products actually present (`usedCategories()`), so a
+   category with no product never appears as an empty choice. Kept here so the seed can
+   be checked at a glance against the intended catalogue. */
 export const CATEGORIES = ["Fruit", "Légume", "Boisson"];
 
 /* The cases below are deliberately varied so the UI can be demonstrated:
