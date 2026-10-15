@@ -72,7 +72,7 @@ export function ProductsPage() {
         <h1>Produits</h1>
         <p className="subtitle mb-0">
           Les produits dont la quantité est inférieure ou égale au seuil de
-          réapprovisionnement sont signalés.
+          réapprovisionnement sont signalés
         </p>
       </header>
 

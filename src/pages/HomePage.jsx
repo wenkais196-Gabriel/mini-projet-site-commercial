@@ -1,12 +1,3 @@
-/* =============================================================================
-   HomePage — "a summary sheet": indicators + breakdown by category.
-   The assignment states "no interaction foreseen": this page therefore contains NO
-   state and NO event handler. It only READS the indicators derived from the store.
-
-   Note for the review: this page is still the reference version written during the
-   interface freeze — see issue #1 (layout, sorting, last orders).
-   ========================================================================== */
-
 import { KpiCard } from "../components/indicators/KpiCard.jsx";
 import { useData } from "../store/DataContext.jsx";
 import { formatPrice } from "../store/selectors.js";
@@ -19,7 +10,7 @@ export function HomePage() {
       <header className="page-header">
         <h1>Tableau de bord</h1>
         <p className="subtitle mb-0">
-          Synthèse du catalogue et de l'activité commerciale.
+          Synthèse du catalogue et de l'activité commerciale
         </p>
       </header>
 
@@ -65,11 +56,11 @@ export function HomePage() {
             <thead className="table-light">
               <tr>
                 <th scope="col">Catégorie</th>
-                <th scope="col" className="text-end">Nb produits</th>
+                <th scope="col" className="text-end">Nombre de produits</th>
                 <th scope="col" className="text-end">Stock moyen</th>
                 <th scope="col" className="text-end">Stock total</th>
                 <th scope="col" className="text-end">Prix moyen</th>
-                <th scope="col" className="text-end">Alertes</th>
+                <th scope="col" className="text-end">Alertes de stock</th>
               </tr>
             </thead>
             <tbody>
