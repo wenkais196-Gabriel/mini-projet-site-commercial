@@ -7,27 +7,27 @@ skinparam ArrowColor #44546A
 autonumber
 
 actor "Utilisateur" as U
-participant "CommandePage\n(etat local)" as P
+participant "OrderPage\n(etat local)" as P
 participant "DataProvider\n(etat partage)" as S
-participant "selecteurs.js\n(fonctions pures)" as Sel
+participant "selectors.js\n(fonctions pures)" as Sel
 participant "Layout\n(barre de navigation)" as L
-participant "ProduitsPage" as Pr
-participant "AccueilPage" as A
+participant "ProductsPage" as Pr
+participant "HomePage" as A
 
 U -> P : choisit un produit et une quantite
 P -> P : setQuantites(...)  bornage 0..stock
 P -> P : total recalcule (donnee derivee)
 
 U -> P : clique sur Valider la commande
-P -> S : validerCommande({ nom, prenom, email, lignes })
-S -> Sel : validerCommande(produits, formulaire)
-Sel --> S : { valide, erreurs, erreursParProduit }
+P -> S : saveOrder({ lastName, firstName, email, lines })
+S -> Sel : validateOrder(products, form)
+Sel --> S : { valid, errors, errorsByProduct }
 
 alt commande invalide
   S --> P : rapport d'erreurs
   P --> U : messages d'erreur (stock insuffisant, mail...)
 else commande valide
-  S -> S : appliquerCommande()  transition pure
+  S -> S : placeOrder()  transition pure
   note right of S
     decremente le stock des produits commandes
     puis ajoute la commande a l'historique

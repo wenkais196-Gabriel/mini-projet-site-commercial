@@ -8,27 +8,30 @@ skinparam ArrowColor #44546A
 rectangle "App  (cabliage)" as App {
 }
 
-card "DataProvider\n{ produits, commandes, statistiques }" as Store {
+card "DataProvider\n{ products, orders, stats }" as Store {
 }
 
-card "Layout\nstatistiques.nbCommandes = 3" as Layout {
+card "Layout\nstats.orderCount = 3" as Layout {
 }
 
-card "AccueilPage\netat : aucun" as Accueil {
-  card "CarteKPI x4\n{ libelle, valeur, variante }" as K1
-  card "table synthese\n{ parCategorie[] }" as K2
+card "HomePage\netat : aucun" as Accueil {
+  card "KpiCard x4\n{ label, value, variant }" as K1
+  card "table synthese\n{ byCategory[] }" as K2
 }
 
-card "ProduitsPage\netat : filtres" as Produits {
-  card "FiltreProduits\n{ valeurs, bornes, categories, nbResultats, nbTotal,\n  onChange, onReinitialiser }" as F
-  card "TableProduits\n{ produits: 13 filtres }" as T {
-    card "RowProduct\n{ produit }" as R
+card "ProductsPage\netat : filters, sort" as Produits {
+  card "ProductFilter\n{ values, bounds, categories, resultCount, totalCount,\n  onSearchChange, onCategoryChange, onMaxPriceChange,\n  onMaxQuantityChange, onMaxThresholdChange, onOnlyLowStockChange, onReset }" as F {
+    card "Input / Checkbox / Range\n{ value, onChange }" as Atomes
+  }
+  card "TableProducts\n{ products: 13 filtres }" as T {
+    card "TableCategory\n{ category, count }" as C
+    card "RowProduct\n{ product }" as R
   }
 }
 
-card "CommandePage\netat : client, quantites, rapport" as Commande {
-  card "LigneCommande\n{ produit, quantite, onQuantiteChange, erreur }" as L {
-    card "SelecteurQuantite\n{ valeur, max = stock, onChange }" as S
+card "OrderPage\netat : customer, quantities, status" as Commande {
+  card "OrderRow\n{ product, quantity, onQuantityChange, error }" as L {
+    card "QuantitySelector\n{ value, max = stock, onChange }" as S
   }
 }
 
@@ -41,6 +44,8 @@ Accueil --> K1
 Accueil --> K2
 Produits --> F
 Produits --> T
+F --> Atomes
+T --> C
 T --> R
 Commande --> L
 L --> S
@@ -53,6 +58,11 @@ end note
 note bottom of R
   Aucun etat local dans les composants
   de presentation : tout vient des props.
+end note
+
+note bottom of C
+  TableCategory ne connait aucun produit :
+  seulement un titre de groupe et un compte.
 end note
 
 @enduml

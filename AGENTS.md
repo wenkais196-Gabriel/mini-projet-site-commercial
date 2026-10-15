@@ -26,7 +26,7 @@ avec lui, on le signale au lieu de contourner.
 ## 2. Règles d'architecture
 
 1. Un composant ne lit **jamais** `src/data/seed.js` : il passe par `useData()`.
-2. Aucun calcul métier dans un composant : tout est dans `src/store/selecteurs.js`.
+2. Aucun calcul métier dans un composant : tout est dans `src/store/selectors.js`.
 3. Une donnée **dérivée** (filtrage, regroupement, statistiques, total, sous-total)
    ne va **jamais** dans un `useState`.
 4. Aucun composant ne mute les données : il passe par une action du store.
@@ -40,17 +40,26 @@ avec lui, on le signale au lieu de contourner.
 
 ## 3. Langue et style
 
-- Code, commentaires, interface, documentation : **en français** (français de France).
-- Noms métier en français (`produit`, `quantite`, `seuil`, `validerCommande`) ;
-  termes React en anglais (`useState`, `props`, `onChange`, `children`).
+Deux langues, avec une frontière nette :
+
+- **Le code est entièrement en ANGLAIS** : noms de fichiers, de dossiers, de
+  composants, de fonctions, de variables, champs du modèle de données **et
+  commentaires**. Cela aligne le projet sur le code du cours (`RowProduct`,
+  `TableProducts`, `SearchBar`) au lieu de mélanger deux habitudes.
+- **Les textes affichés et les documents livrés sont en FRANÇAIS** : libellés de
+  l'interface, messages d'erreur, `README.md`, `docs/`. C'est ce que lit
+  l'utilisateur, et c'est ce que lit l'enseignant.
+- Cas à connaître : dans `orderStatus.js`, les **clés** de `STATUSES` sont anglaises
+  mais leurs **valeurs** sont les libellés affichés — donc français.
 - Une fonction = un commentaire qui dit **pourquoi**, pas **ce que** la ligne fait.
 
 ## 4. Propriété des fichiers
 
 | Périmètre | Propriétaire |
 |---|---|
-| `src/store/**`, `docs/**`, `pages/CommandePage.jsx`, `components/commande/**` | SONG Wenkai |
-| `pages/AccueilPage.jsx`, `pages/ProduitsPage.jsx`, `components/produits/**`, `components/indicateurs/**`, `data/seed.js` | SUI Wenhui |
+| `src/store/**`, `docs/**`, `src/pages/OrderPage.jsx`, `src/components/order/**` | SONG Wenkai |
+| `src/pages/HomePage.jsx`, `src/pages/ProductsPage.jsx`, `src/components/products/**`, `src/components/indicators/**`, `src/data/seed.js` | SUI Wenhui |
+| `src/components/form/**` (atomes réutilisables : Input, Checkbox, Range) | SUI Wenhui (créés par lui) |
 | `package.json`, `package-lock.json`, `.oxlintrc.json`, `AGENTS.md`, `README.md` | accord des deux |
 
 ## 5. Interdits explicites
@@ -66,7 +75,7 @@ avec lui, on le signale au lieu de contourner.
 - [ ] `npm run build` : 0 erreur
 - [ ] `npm run lint` : 0 avertissement
 - [ ] `npm test` : 0 échec
-- [ ] `node verif/verif-e2e.cjs` : 0 échec (voir `verif/README.md`)
+- [ ] `node check/e2e.cjs` : 0 échec (voir `check/README.md`)
 - [ ] Les 3 pages se naviguent sans rechargement, depuis et vers n'importe quelle autre
 - [ ] Un scénario complet passant par les 3 pages : commander → le stock baisse →
       le surlignage apparaît sur Produits → le compteur change sur Accueil

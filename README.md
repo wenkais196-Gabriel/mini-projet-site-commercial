@@ -28,7 +28,7 @@ npm test        # tests unitaires : règles, transitions, Builder, machine à é
 
 `npm test` utilise le lanceur de tests intégré à Node : **aucune dépendance à
 installer**. La vérification de l'application entière dans un vrai navigateur est
-décrite dans [`verif/README.md`](verif/README.md).
+décrite dans [`check/README.md`](check/README.md).
 
 Node 22+ / npm 11+. Rien d'autre à installer : Bootstrap est chargé par CDN, comme
 dans l'exercice 4.
@@ -71,20 +71,21 @@ App  (câblage : provider de données + router)
 src/
   data/seed.js               données de départ (source de vérité unique)
   store/DataContext.jsx      colle React : useData() + actions (AUCUNE règle métier)
-  store/etat.js              état et transitions PURES (patterns Command)
-  store/selecteurs.js        calculs et validations PURES (filtres, stats, règles)
-  store/commandeBuilder.js   construction d'une commande (pattern Builder)
-  store/statutCommande.js    machine à états du formulaire (pattern State)
+  store/state.js             état et transitions PURES (pattern Command)
+  store/selectors.js         calculs et validations PURES (filtres, stats, règles)
+  store/orderBuilder.js      construction d'une commande (pattern Builder)
+  store/orderStatus.js       machine à états du formulaire (pattern State)
   pages/                     1 fichier = 1 page virtuelle (orchestration + état local)
-  components/produits/       RowProduct, TableProduits, FiltreProduits
-  components/commande/       LigneCommande, SelecteurQuantite
-  components/indicateurs/    CarteKPI
+  components/form/           atomes réutilisables : Input, Checkbox, Range
+  components/products/       RowProduct, TableCategory, TableProducts, ProductFilter
+  components/order/          OrderRow, QuantitySelector
+  components/indicators/     KpiCard
   components/layout/         Layout (barre de navigation + commandes globales)
 docs/
   analyse-design-patterns.md document de remise (partie 2)
   diagrammes/                diagrammes de composants (sources .puml + rendus)
 test/                        tests unitaires des modules purs (node --test, 0 dépendance)
-verif/                       vérification de bout en bout dans un navigateur (outil)
+check/                       vérification de bout en bout dans un navigateur (outil)
 ```
 
 Deux règles d'architecture à ne jamais casser :
@@ -102,14 +103,14 @@ Deux règles d'architecture à ne jamais casser :
 
 | Clé | Type | Usage |
 |---|---|---|
-| `produits` | `{ id, nom, categorie, prix, quantite, seuil }[]` | liste courante |
-| `commandes` | `{ id, date, client, lignes[] }[]` | commandes enregistrées |
-| `statistiques` | objet | indicateurs dérivés (page Accueil) |
-| `validerCommande(formulaire)` | fonction | enregistre si valide, renvoie `{ valide, erreurs, erreursParProduit, commande? }` |
-| `annulerDerniereOperation()` | fonction | défait la dernière opération (pattern Command) ; renvoie `{ annulee, libelle? }` |
-| `derniereOperation` | `{ libelle, … }` ou `null` | la dernière opération annulable (libellé du bouton) |
-| `peutAnnuler` | booléen | vrai s'il reste une opération à annuler |
-| `reinitialiser()` | fonction | rétablit les données de départ |
+| `products` | `{ id, name, category, price, quantity, threshold }[]` | liste courante |
+| `orders` | `{ id, date, customer, lines[] }[]` | commandes enregistrées |
+| `stats` | objet | indicateurs dérivés (page Accueil) |
+| `saveOrder(form)` | fonction | enregistre si valide, renvoie `{ valid, errors, errorsByProduct, order? }` |
+| `undoLastOperation()` | fonction | défait la dernière opération (pattern Command) ; renvoie `{ undone, label? }` |
+| `lastOperation` | `{ label, … }` ou `null` | la dernière opération annulable (libellé du bouton) |
+| `canUndo` | booléen | vrai s'il reste une opération à annuler |
+| `reset()` | fonction | rétablit les données de départ |
 
 Le modèle de données et ces signatures sont **gelés** : toute évolution doit être
 annoncée avant d'être codée, sinon le binôme travaille sur deux versions différentes.
