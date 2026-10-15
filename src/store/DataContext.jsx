@@ -1,124 +1,44 @@
 /* =============================================================================
-   DataContext.jsx — le STORE de l'application. C'est la pièce centrale du sujet.
+   DataContext.jsx — la COLLE React de l'état partagé.
+
+   Ce fichier ne contient plus aucune règle métier : les calculs sont dans
+   `selecteurs.js`, les transitions dans `etat.js`, la construction d'une commande
+   dans `commandeBuilder.js`, les états du formulaire dans `statutCommande.js`.
+   Ici on ne fait que trois choses :
+
+     1. créer l'état unique de l'application (un seul <DataProvider> monté) ;
+     2. exposer les actions qui le font évoluer ;
+     3. fournir le hook `useData()` qui y donne accès.
 
    Problème à résoudre : les 3 pages sont indépendantes, il n'y a pas de serveur,
    et pourtant « les données sont liées entre les pages virtuelles ». Une donnée
-   ne peut donc pas appartenir à une page : elle doit appartenir à un ANCÊTRE
-   COMMUN, ici le DataProvider placé au-dessus du router (voir src/App.jsx).
+   ne peut donc pas appartenir à une page : elle appartient à un ANCÊTRE COMMUN,
+   ici le DataProvider placé au-dessus du router (voir src/App.jsx).
 
    Ce que ce fichier apporte pour la partie 2 (analyse de patterns) :
-   - un ÉTAT unique (produits + commandes) dont toutes les transitions sont
-     décrites par une seule fonction pure, `appliquerCommande` : un « magasin »
-     dont tous les composants lisent la même version ;
+   - un ÉTAT unique dont les transitions sont des fonctions pures (piste Command) ;
    - les composants abonnés (useData) sont RE-RENDUS quand l'état change : c'est
      exactement un mécanisme publier/abonner (piste Observer) ;
    - l'instance unique fournie par le Provider est un point d'accès unique
-     (piste Singleton), à la réserve qu'en React on préfère
-     « état unique + notification » à « variable globale mutable ».
+     (piste Singleton), à la réserve qu'en React on préfère « état unique +
+     notification » à « variable globale mutable ».
 
-   Note outillage : ce module exporte à la fois un composant (DataProvider), un
-   hook (useData) et des transitions pures. La règle de lint
-   `react/only-export-components` vise les fichiers d'un seul composant et
-   signalerait ici trois faux positifs : elle est donc désactivée pour CE fichier
-   uniquement (voir .oxlintrc.json).
+   Note outillage : ce module exporte à la fois un composant (DataProvider) et un
+   hook (useData). La règle de lint `react/only-export-components` vise les fichiers
+   d'un seul composant et signalerait ici un faux positif : elle est donc
+   désactivée pour CE fichier uniquement (voir .oxlintrc.json).
    ========================================================================== */
 
 import { createContext, useCallback, useContext, useMemo, useReducer } from "react";
-import { COMMANDES_INITIALES, PRODUITS_INITIAUX } from "../data/seed.js";
-import { calculerStatistiques, validerCommande } from "./selecteurs.js";
+import { calculerStatistiques } from "./selecteurs.js";
+import {
+  annulerDerniereOperation as transitionAnnulerDerniereOperation,
+  appliquerCommande,
+  creerEtatInitial,
+  reducer,
+} from "./etat.js";
 
 const DataContext = createContext(null);
-
-/**
- * Copie profonde explicite des données de départ.
- * Sans cette copie, l'état partagerait ses tableaux/objets avec les constantes du
- * module : la première commande muterait `PRODUITS_INITIAUX` et le bouton
- * « Réinitialiser » deviendrait inopérant.
- */
-export function creerEtatInitial() {
-  return {
-    produits: PRODUITS_INITIAUX.map((produit) => ({ ...produit })),
-    commandes: COMMANDES_INITIALES.map((commande) => ({
-      ...commande,
-      client: { ...commande.client },
-      lignes: commande.lignes.map((ligne) => ({ ...ligne })),
-    })),
-    prochainNumero: COMMANDES_INITIALES.length + 1,
-  };
-}
-
-function numeroCommande(numero) {
-  return `C${String(numero).padStart(3, "0")}`;
-}
-
-/**
- * TRANSITION PURE de l'état : passer une commande.
- *
- * Elle est volontairement sortie du reducer et exportée :
- *  - une seule implémentation des règles (pas de validation dupliquée) ;
- *  - le reducer devient une ligne → ses cas restent lisibles ;
- *  - elle est appelable directement en console pour vérifier le modèle.
- *
- * @param {ReturnType<typeof creerEtatInitial>} etat
- * @param {{ nom: string, prenom: string, email: string, lignes: {idProduit:string, quantite:number}[] }} formulaire
- * @param {string} date  Date au format AAAA-MM-JJ (injectée → déterministe en test)
- * @returns {{ rapport: ReturnType<typeof validerCommande>,
- *             etat: ReturnType<typeof creerEtatInitial>,
- *             commande: import('../data/seed.js').Commande | null }}
- */
-export function appliquerCommande(etat, formulaire, date) {
-  // L'état est le dernier rempart : il ne fait confiance à aucun formulaire.
-  const rapport = validerCommande(etat.produits, formulaire);
-  if (!rapport.valide) {
-    return { rapport, etat, commande: null };
-  }
-
-  const commande = {
-    id: numeroCommande(etat.prochainNumero),
-    date,
-    client: {
-      nom: formulaire.nom.trim(),
-      prenom: formulaire.prenom.trim(),
-      email: formulaire.email.trim(),
-    },
-    lignes: rapport.lignes,
-  };
-
-  // Décrémentation du stock : c'est ICI que les 3 pages deviennent « liées ».
-  // Passer une commande change l'affichage de la page Produits (surlignage) et de
-  // l'Accueil (nombre de commandes), sans que ces pages aient rien demandé.
-  const produits = etat.produits.map((produit) => {
-    const ligne = rapport.lignes.find((l) => l.idProduit === produit.id);
-    return ligne
-      ? { ...produit, quantite: produit.quantite - ligne.quantite }
-      : produit;
-  });
-
-  return {
-    rapport,
-    etat: {
-      ...etat,
-      produits,
-      commandes: [...etat.commandes, commande],
-      prochainNumero: etat.prochainNumero + 1,
-    },
-    commande,
-  };
-}
-
-/** Le reducer : une fonction pure (état, action) → nouvel état. */
-function reducer(etat, action) {
-  switch (action.type) {
-    case "VALIDER_COMMANDE":
-      return appliquerCommande(etat, action.formulaire, action.date).etat;
-
-    case "REINITIALISER":
-      return creerEtatInitial();
-
-    default:
-      return etat;
-  }
-}
 
 /**
  * Fournit l'état et les actions à tout l'arbre de composants.
@@ -129,7 +49,12 @@ function reducer(etat, action) {
 export function DataProvider({ children, dateDuJour }) {
   const [etat, dispatch] = useReducer(reducer, undefined, creerEtatInitial);
 
-  const validerCommandeAction = useCallback(
+  /**
+   * Enregistre une commande si elle est valide, sinon renvoie le rapport d'erreurs.
+   * La transition est calculée AVANT le dispatch : c'est ce qui permet de renvoyer
+   * à l'appelant la commande réellement créée (un reducer, lui, ne renvoie rien).
+   */
+  const validerCommande = useCallback(
     (formulaire) => {
       const date = dateDuJour ?? new Date().toISOString().slice(0, 10);
       const { rapport, commande } = appliquerCommande(etat, formulaire, date);
@@ -137,12 +62,24 @@ export function DataProvider({ children, dateDuJour }) {
       if (commande === null) return rapport; // la page affiche les erreurs
 
       dispatch({ type: "VALIDER_COMMANDE", formulaire, date });
-      // On renvoie la commande créée pour que la page puisse la confirmer.
       return { ...rapport, commande };
     },
     [etat, dateDuJour],
   );
 
+  /**
+   * Annule la dernière opération enregistrée (pattern Command).
+   * @returns {{ annulee: boolean, libelle?: string }}
+   */
+  const annulerDerniereOperation = useCallback(() => {
+    const { operation } = transitionAnnulerDerniereOperation(etat);
+    if (operation === null) return { annulee: false };
+
+    dispatch({ type: "ANNULER_DERNIERE_OPERATION" });
+    return { annulee: true, libelle: operation.libelle };
+  }, [etat]);
+
+  /** Rétablit les données de départ (démonstration / soutenance). */
   const reinitialiser = useCallback(() => dispatch({ type: "REINITIALISER" }), []);
 
   const valeur = useMemo(
@@ -154,11 +91,16 @@ export function DataProvider({ children, dateDuJour }) {
       /** Indicateurs dérivés, recalculés à chaque changement d'état. */
       statistiques: calculerStatistiques(etat.produits, etat.commandes),
       /** Enregistre une commande si elle est valide, sinon renvoie les erreurs. */
-      validerCommande: validerCommandeAction,
-      /** Rétablit les données de départ (démonstration / soutenance). */
+      validerCommande,
+      /** Annule la dernière opération ; renvoie `{ annulee, libelle }`. */
+      annulerDerniereOperation,
+      /** Dernière opération annulable, ou `null` (sert au libellé du bouton). */
+      derniereOperation: etat.historique.at(-1) ?? null,
+      peutAnnuler: etat.historique.length > 0,
+      /** Rétablit les données de départ. */
       reinitialiser,
     }),
-    [etat, validerCommandeAction, reinitialiser],
+    [etat, validerCommande, annulerDerniereOperation, reinitialiser],
   );
 
   return <DataContext.Provider value={valeur}>{children}</DataContext.Provider>;
