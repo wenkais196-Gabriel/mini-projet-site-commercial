@@ -18,9 +18,11 @@
 export const CATEGORIES = ["Fruit", "Légume", "Boisson"];
 
 /* The cases below are deliberately varied so the UI can be demonstrated:
-   - P02 / P07 / P09 / P13 : quantity ABOVE 0 but ≤ threshold  → low stock
-   - P03                   : quantity = 0                      → out of stock
-   - P05                   : quantity EXACTLY equal to threshold → boundary case
+   - P02 / P03 / P07 / P09 / P13 : quantity STRICTLY below the threshold → highlighted
+   - P03                        : quantity = 0                      → out of stock
+   - P05                        : quantity EXACTLY equal to threshold → boundary case,
+                                  deliberately NOT highlighted (the assignment says
+                                  "en dessous du seuil")
    @type {Product[]} */
 export const INITIAL_PRODUCTS = [
   { id: "P01", name: "Banane", category: "Fruit", price: 2.4, quantity: 42, threshold: 15 },

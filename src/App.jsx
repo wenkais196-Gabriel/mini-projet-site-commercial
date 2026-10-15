@@ -5,7 +5,7 @@
    "linked between the virtual pages" (requirement of the assignment).
    ========================================================================== */
 
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { DataProvider } from "./store/DataContext.jsx";
 import { Layout } from "./components/layout/Layout.jsx";
 import { HomePage } from "./pages/HomePage.jsx";
@@ -26,8 +26,6 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/produits" element={<ProductsPage />} />
             <Route path="/commande" element={<OrderPage />} />
-            {/* Any unknown URL goes back to the home page */}
-            <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
       </BrowserRouter>

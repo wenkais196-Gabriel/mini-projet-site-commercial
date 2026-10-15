@@ -44,10 +44,10 @@ Deux séparations structurent tout le code :
 
 | Composant | Catégorie | Ce qui le rend standard / non standard |
 |---|---|---|
-| `Input`, `Checkbox`, `Range` | **Standard** | Les trois atomes du cours (exercice 4). Ils ignorent le métier — « j'affiche une valeur, et je préviens quand elle change » — et sont réutilisés par le filtre produits **et** disponibles pour la page commande. |
+| `Input`, `Range`, `Checkbox` | **Standard** | Les atomes du cours (exercice 4) : ils ignorent le métier — « j'affiche une valeur, et je préviens quand elle change ». `Input` et `Range` composent le filtre produits. `Checkbox` appartient à la même famille mais **n'est pas utilisé** : la seule case du cours servait à filtrer les alertes, un critère que le sujet ne demande pas (voir § 4.3). |
 | `RowProduct` / `OrderRow` | **Standard** | Présentation pure, pilotés entièrement par leurs `props`. |
 | `QuantitySelector` | **Standard** | Ignore le métier : affiche « une quantité bornée dans [0, max] ». Réutilisable hors du projet. |
-| `ProductFilter` | **Non standard** | Orchestrateur : compose les trois atomes, agrège 5 critères, totalement contrôlé, et **un port de sortie par filtre** — exactement la structure du modèle de composants du cours. |
+| `ProductFilter` | **Non standard** | Orchestrateur : compose les atomes de formulaire, agrège 5 critères (tous les attributs), totalement contrôlé, et **un port de sortie par filtre** — exactement la structure du modèle de composants du cours. |
 | `TableProducts` | **Non standard** | Composite : regroupe par catégorie et **fabrique** ses lignes (donnée dérivée calculée au rendu). |
 | `TableCategory` | **Non standard** | Composant « structurel » : il ne connaît qu'un titre de groupe et un nombre d'éléments, jamais un produit. |
 | `KpiCard` | **Non standard** | À facette : `props.children` — la carte fournit le cadre, l'appelant fournit le contenu. |
@@ -91,7 +91,7 @@ Deux séparations structurent tout le code :
 | **Singleton** | **Présent** (sous une forme adaptée à React) | `DataProvider` + `useData()` : un seul état partagé, un seul point d'accès | — |
 | **Abstract Factory** | **Incompatible en l'état** (compatible si on introduit des familles) | Fabrique de lignes/labels par famille de produits | élevé |
 | **Builder** | **Présent** | `src/store/orderBuilder.js` — `OrderBuilder` | fait |
-| **Decorator** | Compatible, non implémenté — immédiat | HOC `avecSurlignage(Ligne)` ou fonction de formatage | faible |
+| **Decorator** | Compatible, non implémenté — immédiat | HOC `withHighlight(RowProduct)` ou fonction de formatage | faible |
 | **Command** | **Présent** | `src/store/state.js` — objets-opérations + `undoOperation` | fait |
 | **Observer** | **Présent** (assuré par React) | Abonnement des composants à l'état partagé | — |
 | **State** | **Présent** | `src/store/orderStatus.js` — `TRANSITIONS` + `transition` | fait |
@@ -123,7 +123,8 @@ plus qu'il ne rapporte.
 
 ### 3.3 Singleton
 
-**Verdict — présent, sous une forme adaptée à React.**
+**Verdict — présent, et complet au sens du sujet : l'accès unique est garanti, et
+aucun composant ne peut créer une seconde copie des données.**
 
 `App.jsx` monte **un seul** `<DataProvider>` : il n'existe qu'une seule instance de
 l'état `{ products, orders }` pour toute l'application. `useData()` est le
@@ -149,7 +150,7 @@ ce qui est impossible avec un vrai Singleton, et c'est un avantage.
 *Pourquoi incompatible aujourd'hui.* Une fabrique abstraite sert à créer **des
 familles d'objets cohérentes entre elles**, choisies à l'exécution. Ici, il n'y a
 qu'**une seule famille** : des produits à 5 attributs (`nom`, `categorie`, `prix`,
-`quantite`, `seuil`) et une seule façon de les afficher (`RowProduct`). Créer une
+`quantity`, `threshold`) et une seule façon de les afficher (`RowProduct`). Créer une
 fabrique pour une famille unique ajouterait une couche d'indirection sans aucun
 choix à faire derrière : du code décoratif.
 
@@ -167,7 +168,9 @@ données (donc les 3 pages et le store), à la veille de la remise.
 
 ### 3.5 Builder
 
-**Verdict — présent.** Implémenté dans `src/store/orderBuilder.js` et utilisé par
+**Verdict — présent, et complet : le Builder assemble la totalité de la commande,
+et les deux niveaux de contrôle (immédiat + final) sont tous les deux en place.**
+Implémenté dans `src/store/orderBuilder.js` et utilisé par
 `OrderPage`.
 
 *Ce que le Builder apporte ici.* Le sujet impose un formulaire qui doit « respecter
@@ -211,21 +214,21 @@ prêts à l'emploi :
    préoccupations indépendantes :
 
    ```js
-   export function avecSurlignage(Composant) {
-     return function LigneSurlignee(props) {
-       const alerte = estEnAlerte(props.produit);
+   export function withHighlight(Component) {
+     return function HighlightedRow(props) {
+       const alert = isLowStock(props.product);
        return (
-         <div className={alerte ? "ligne-alerte" : undefined}>
-           <Composant {...props} />
+         <div className={alert ? "alert-row" : undefined}>
+           <Component {...props} />
          </div>
        );
      };
    }
-   const LigneRuption = avecRupture(avecSurlignage(RowProduct));
+   const OutOfStockRow = withOutOfStock(withHighlight(RowProduct));
    ```
 
-2. **Sur le prix.** `formaterPrix` est aujourd'hui une fonction. Un
-   `PrixDecorator` permettrait d'empiler des règles de présentation (prix barré si
+2. **Sur le prix.** `formatPrice` est aujourd'hui une fonction. Un
+   `PriceDecorator` permettrait d'empiler des règles de présentation (prix barré si
    promotion, couleur si prix élevé, affichage HT/TTC) sans toucher aux composants.
 
 *Coût.* Faible — le vrai intérêt pédagogique est de montrer qu'on peut ajouter un
@@ -237,17 +240,18 @@ choisi de **ne pas** décorer `RowProduct` dans la version actuelle.
 
 ### 3.7 Command
 
-**Verdict — présent.** Implémenté dans `src/store/state.js`, exposé par le store et
-déclenché par le bouton « Annuler » de la barre de navigation.
+**Verdict — présent, et complet au sens du sujet.** Implémenté dans
+`src/store/state.js`, exposé par le store et déclenché par le bouton « Annuler » de
+la barre de navigation.
 
 *Où c'est déjà présent.* Le store reçoit des objets de la forme :
 
 ```js
-dispatch({ type: "VALIDER_COMMANDE", formulaire, date })
+dispatch({ type: "PLACE_ORDER", form, date })
 ```
 
 Chaque action est un objet autonome qui transporte à la fois l'intention (`type`) et
-ses paramètres (`formulaire`, `date`) ; le `reducer` est l'exécutant qui traduit
+ses paramètres (`form`, `date`) ; le `reducer` est l'exécutant qui traduit
 cet objet en modification d'état. C'est exactement la structure du pattern Command :
 **une demande encapsulée dans un objet**, que le destinataire exécute sans avoir à
 connaître l'appelant. `dispatch` joue le rôle d'invocateur.
@@ -257,10 +261,10 @@ connaître l'appelant. `dispatch` joue le rôle d'invocateur.
 1. une pile `historique[]` dans l'état, qui ne contient que les opérations
    **annulables** (les 3 commandes livrées avec l'application en sont exclues :
    elles font partie des données de départ) ;
-2. un interpréteur inverse unique, `annulerOperation`, qui réincrémente le stock
+2. un interpréteur inverse unique, `undoOperation`, qui réincrémente le stock
    prélevé et retire la commande — un seul endroit à maintenir, quel que soit le
    nombre de types d'opérations ajoutés ensuite ;
-3. une action `ANNULER_DERNIERE_OPERATION` et le bouton « Annuler » dans la barre de
+3. une action `UNDO_LAST_OPERATION` et le bouton « Annuler » dans la barre de
    navigation, qui affiche la dernière opération annulable (« dernière opération :
    commande C004 »).
 
@@ -272,8 +276,9 @@ formulaire et difficile à défendre en soutenance.
 
 ### 3.8 Observer
 
-**Verdict — présent : c'est le mécanisme central de React, et il est ici directement
-visible.**
+**Verdict — présent, adapté à React, et complet : tous les composants de la page
+Accueil et de la page Produits sont effectivement re-rendus à partir de la même
+source, sans une seule ligne de synchronisation manuelle.**
 
 React applique exactement le pattern Observer : un composant « s'abonne » à une
 donnée, et il est automatiquement notifié (re-rendu) quand cette donnée change. Le
@@ -282,7 +287,7 @@ les **observateurs**. Le cas est particulièrement net sur notre application :
 
 ```
 OrderPage → saveOrder() → l'état { products, orders } change
-        ├── Layout         re-rendu  → le compteur de commandes change
+        ├── Layout         re-rendu  → le libellé de la dernière opération change
         ├── HomePage       re-rendu  → les indicateurs changent
         └── ProductsPage   re-rendu  → le surlignage des produits change
 ```
@@ -300,21 +305,22 @@ fournit déjà — donc un gain pédagogique contre une perte de simplicité.
 
 ### 3.9 State
 
-**Verdict — présent.** Implémenté dans `src/store/orderStatus.js` et piloté par la
-page Commande.
+**Verdict — présent, et complet.** Implémenté dans `src/store/orderStatus.js` et
+piloté par la page Commande.
 
 *Où l'on en était, et ce qui reste vrai.* L'état de **santé d'un produit** est
-toujours *calculé* à la volée :
+toujours *calculé* à la volée — mais il n'a plus besoin d'être affiché sous forme de
+libellé, puisque le sujet ne demande qu'un **surlignage** :
 
 ```js
-export function estEnAlerte(produit)  { return produit.quantite <= produit.seuil; }
-export function estEnRupture(produit) { return produit.quantite === 0; }
+export function isLowStock(product)   { return product.quantity < product.threshold; }
+export function isOutOfStock(product) { return product.quantity === 0; }
 ```
 
-Un produit est donc « disponible », « à réapprovisionner » ou « en rupture » par
-déduction, à chaque rendu. C'est un bon choix pour cette information : rien ne peut
-se désynchroniser (il ne peut pas exister un produit marqué « en rupture » qui aurait
-du stock). Une donnée dérivée ne mérite pas une machine à états.
+La ligne d'un produit est donc surlignée ou non, par déduction, à chaque rendu. C'est
+un bon choix pour cette information : rien ne peut se désynchroniser (il ne peut pas
+exister un produit marqué « en alerte » qui aurait du stock). Une donnée dérivée ne
+mérite pas une machine à états.
 
 *Le cas d'usage que nous avons implémenté : le cycle de vie du formulaire de commande.*
 
@@ -328,29 +334,29 @@ Un formulaire de commande a de vrais états et de vraies transitions :
 | `Valide` | `Enregistrée` | clic sur « Valider » |
 | `Enregistrée` | `Brouillon` | nouvelle commande / annulation (cf. Command) |
 
-Ces états existent maintenant **explicitement**, dans `STATUTS` et dans la table
+Ces états existent maintenant **explicitement**, dans `STATUSES` et dans la table
 `TRANSITIONS` — la définition unique de ce qui est permis :
 
 ```js
 export const TRANSITIONS = {
-  [BROUILLON]:   { saisie: EN_SAISIE, verificationEchouee: INVALIDE },
-  [EN_SAISIE]:   { saisie: EN_SAISIE, effacement: BROUILLON,
-                   verificationReussie: VALIDE, verificationEchouee: INVALIDE },
-  [INVALIDE]:    { saisie: EN_SAISIE, effacement: BROUILLON,
-                   verificationReussie: VALIDE, verificationEchouee: INVALIDE },
-  [VALIDE]:      { saisie: EN_SAISIE, effacement: BROUILLON, enregistrement: ENREGISTREE },
-  [ENREGISTREE]: { saisie: EN_SAISIE, effacement: BROUILLON, nouvelleCommande: BROUILLON },
+  [DRAFT]:   { [EDIT]: EDITING, [VERIFICATION_FAILED]: INVALID },
+  [EDITING]: { [EDIT]: EDITING, [CLEAR]: DRAFT,
+               [VERIFICATION_SUCCEEDED]: VALID, [VERIFICATION_FAILED]: INVALID },
+  [INVALID]: { [EDIT]: EDITING, [CLEAR]: DRAFT,
+               [VERIFICATION_SUCCEEDED]: VALID, [VERIFICATION_FAILED]: INVALID },
+  [VALID]:   { [EDIT]: EDITING, [CLEAR]: DRAFT, [SAVE]: SAVED },
+  [SAVED]:   { [EDIT]: EDITING, [CLEAR]: DRAFT, [NEW_ORDER]: DRAFT },
 };
 ```
 
 Ce que l'application y gagne, concrètement :
 
-- **les messages sont pilotés par l'état** : seul `INVALIDE` affiche les erreurs
-  (`afficheLesErreurs`), seul `ENREGISTREE` affiche la confirmation
-  (`afficheLaConfirmation`) — plus une seule condition imbriquée dans le JSX ;
-- **les transitions impossibles sont refusées** : depuis `BROUILLON`, l'événement
-  `enregistrement` n'existe pas, donc on ne peut pas enregistrer une commande jamais
-  vérifiée ; `transitionner` renvoie alors l'état inchangé au lieu de planter (une
+- **les messages sont pilotés par l'état** : seul `INVALID` affiche les erreurs
+  (`showsErrors`), seul `SAVED` affiche la confirmation
+  (`showsConfirmation`) — plus une seule condition imbriquée dans le JSX ;
+- **les transitions impossibles sont refusées** : depuis `DRAFT`, l'événement
+  `SAVE` n'existe pas, donc on ne peut pas enregistrer une commande jamais
+  vérifiée ; `transition` renvoie alors l'état inchangé au lieu de planter (une
   interface ne doit jamais casser sur une action de l'utilisateur) ;
 - **la machine est visible** : la page Commande affiche son état courant, ce qui rend
   le mécanisme démontrable en soutenance sans ouvrir les outils de développement.
@@ -368,7 +374,7 @@ couples (état, événement) pour prouver qu'aucune transition interdite ne pass
 | Point ambigu | Notre lecture | Conséquence |
 |---|---|---|
 | « données liées entre les pages » | une commande **décrémente le stock** ; les autres pages s'en trouvent modifiées | c'est ce qui donne du sens à Observer, Singleton et State |
-| « quantité en dessous du seuil » | **≤** (l'égalité déclenche l'alerte) — cas limite visible avec le produit `Orange` (12/12) | une seule fonction `estEnAlerte()` pour toute l'application |
+| « quantité en dessous du seuil » | **`<` strict** — l'énoncé dit « en dessous du seuil », donc un produit dont la quantité est **égale** au seuil n'est pas signalé. Cas limite conservé dans les données : `Orange` (12/12) n'est pas surligné | une seule fonction `isLowStock()` pour toute l'application, et un test dédié au cas limite (unitaire + bout en bout) |
 | valeur du « stock moyen » | moyenne des quantités disponibles, arrondie au dixième | affiché sur la page Accueil |
 | filtre « prix maximum » | curseur dont la position maximale signifie « aucun filtre » | un `Range` ne sait pas représenter une absence de valeur |
 
@@ -390,8 +396,9 @@ avec l'idée pour chacun :
 3. **Historique multi-niveaux** : l'annulation est volontairement limitée à la
    dernière opération. Un vrai undo/redo (ou un retour à un point précis) serait
    disproportionné pour un formulaire et difficile à expliquer en soutenance.
-4. **Filtres de la page Produits** : les 5 attributs sont couverts ; le tri par
-   colonne et la mémoïsation (chapitre memoisation du cours) restent à faire.
+4. **Filtres de la page Produits** : les 5 attributs sont couverts, le tri par
+   colonne et la mémoïsation des valeurs dérivées (chapitre memoisation du cours)
+   sont en place.
 5. **Persistance** : aucune, et c'est un choix (voir 4.3).
 
 ### 4.3 Ce que nous avons volontairement refusé
@@ -404,3 +411,10 @@ avec l'idée pour chacun :
   démonstration moins lisible).
 - **Un vrai système d'annulation multi-niveaux** : disproportionné pour un
   formulaire, et source de bugs d'historique difficiles à expliquer en soutenance.
+- **Les fonctions hors sujet**, retirées après une relecture du sujet : alertes de
+  stock sur la page Accueil, colonne « État » dans le tableau des produits, filtre
+  « alertes seulement », route de repli pour les URL inconnues. Le sujet ne demande
+  sur l'accueil que des indicateurs, la synthèse par catégorie et le nombre de
+  commandes passées. Les deux seules fonctions conservées au-delà de l'énoncé sont
+  « Annuler » et « Réinitialiser » : ce sont les démonstrations concrètes de Command
+  et de State, dont l'analyse fait l'objet de la partie 2.
