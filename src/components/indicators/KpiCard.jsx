@@ -1,39 +1,25 @@
 /**
- * KpiCard — NON-STANDARD component with a "facet": it does not know what it shows.
+ * KpiCard — NON-STANDARD component with a "facet": it does not know WHAT it shows.
  *
- * Two possible uses:
- *   <KpiCard label="Produits" value={13} />              → plain display
- *   <KpiCard label="Alertes"><MyGauge/></KpiCard>        → free content
+ * It supplies the frame and the title; the CALLER supplies the content through
+ * `props.children`. This is the "facet" of the course's component model (CCM) — the
+ * card decides how the frame looks, the page decides what is displayed:
  *
- * This is the `props.children` of the course (facet in CCM vocabulary): the card
- * provides the frame and the title, the caller provides the content. No local state.
+ *   <KpiCard label="Produits">
+ *     <div className="kpi-value">{stats.productCount}</div>
+ *   </KpiCard>
  *
- * @param {{ label: string, value?: string|number, unit?: string, detail?: string,
- *           variant?: 'primary'|'alert'|'outOfStock'|'neutral'|'success',
- *           children?: React.ReactNode }} props
+ * No local state, and no decision on the content: that is what makes it a facet
+ * rather than a component that would impose its own display.
+ *
+ * @param {{ label: string, children: React.ReactNode }} props
  */
-const COLORS = {
-  primary: "var(--primary-color)",
-  alert: "var(--alert-color)",
-  outOfStock: "var(--out-of-stock-color)",
-  success: "var(--success-color)",
-  neutral: "#4b5563",
-};
-
-export function KpiCard({ label, value, unit, detail, variant = "primary", children }) {
+export function KpiCard({ label, children }) {
   return (
     <div className="card kpi h-100 shadow-sm">
       <div className="card-body">
         <div className="kpi-label mb-2">{label}</div>
-
-        {children ?? (
-          <div className="kpi-value" style={{ color: COLORS[variant] }}>
-            {value}
-            {unit ? <span className="fs-5 ms-1 fw-normal">{unit}</span> : null}
-          </div>
-        )}
-
-        {detail ? <div className="text-muted small mt-2">{detail}</div> : null}
+        {children}
       </div>
     </div>
   );

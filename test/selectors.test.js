@@ -107,6 +107,20 @@ describe("filtering (criteria cumulate with AND)", () => {
     );
   });
 
+  it("keeps only the products below their threshold when asked", () => {
+    assert.deepEqual(
+      filterProducts(CATALOGUE, { onlyLowStock: true }).map((p) => p.id),
+      ["P02", "P03"], // Pomme 8/20 et Cerise 0/10 — Orange 12/12 n'est PAS sous le seuil
+    );
+  });
+
+  it("cumulates the threshold criterion with the attribute filters", () => {
+    assert.deepEqual(
+      filterProducts(CATALOGUE, { onlyLowStock: true, category: "Fruit" }).map((p) => p.id),
+      ["P02", "P03"],
+    );
+  });
+
   it("cumulates two criteria (category + price)", () => {
     assert.deepEqual(
       filterProducts(CATALOGUE, { category: "Fruit", maxPrice: 2.1 }).map((p) => p.id),

@@ -40,7 +40,7 @@ dans l'exercice 4.
 | Page | Route | Contenu |
 |---|---|---|
 | Accueil | `/` | Indicateurs + synthèse par catégorie. Aucune interaction. |
-| Produits | `/produits` | Liste filtrable (5 attributs) + surlignage sous le seuil |
+| Produits | `/produits` | Liste filtrable (5 attributs + critère « sous le seuil ») + surlignage |
 | Commande | `/commande` | Formulaire client + sélection de produits, dans la limite du stock |
 
 **Le point clé du sujet** : « les données sont liées entre les pages virtuelles ».

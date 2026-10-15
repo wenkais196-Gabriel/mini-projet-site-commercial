@@ -25,6 +25,7 @@ const INITIAL_FILTERS = {
   maxPrice: null,
   maxQuantity: null,
   maxThreshold: null,
+  onlyLowStock: false,
 };
 
 const SORTABLE_COLUMNS = [
@@ -86,6 +87,7 @@ export function ProductsPage() {
         onMaxPriceChange={changeFilter("maxPrice")}
         onMaxQuantityChange={changeFilter("maxQuantity")}
         onMaxThresholdChange={changeFilter("maxThreshold")}
+        onOnlyLowStockChange={changeFilter("onlyLowStock")}
         onReset={() => setFilters(INITIAL_FILTERS)}
       />
 

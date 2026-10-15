@@ -24,7 +24,7 @@ package "src/components" #EAF1F8 {
   component "Layout\n(gabarit des 3 pages)" as Layout <<non standard>>
   component "form/Input" as Input <<standard>>
   component "form/Range" as Range <<standard>>
-  component "form/Checkbox" as Check <<standard, non utilise>>
+  component "form/Checkbox" as Check <<standard>>
   component "KpiCard" as KPI <<non standard>>
   component "ProductFilter" as Filtre <<non standard>>
   component "TableProducts" as Table <<non standard>>
@@ -60,6 +60,7 @@ Accueil --> KPI
 Produits --> Filtre
 Produits --> Table
 Filtre --> Input
+Filtre --> Check
 Filtre --> Range
 Table --> Cat
 Table --> Row : product

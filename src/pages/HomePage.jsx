@@ -16,10 +16,15 @@ export function HomePage() {
       {/* --- Indicators ------------------------------------------------ */}
       <div className="row g-3 mb-4">
         <div className="col-6">
-          <KpiCard label="Produits" value={stats.productCount} />
+          {/* Facet: the card provides the frame, the page provides the content. */}
+          <KpiCard label="Produits">
+            <div className="kpi-value">{stats.productCount}</div>
+          </KpiCard>
         </div>
         <div className="col-6">
-          <KpiCard label="Commandes" value={stats.orderCount} />
+          <KpiCard label="Commandes">
+            <div className="kpi-value">{stats.orderCount}</div>
+          </KpiCard>
         </div>
       </div>
 

@@ -44,10 +44,10 @@ Deux séparations structurent tout le code :
 
 | Composant | Catégorie | Ce qui le rend standard / non standard |
 |---|---|---|
-| `Input`, `Range`, `Checkbox` | **Standard** | Les atomes du cours (exercice 4) : ils ignorent le métier — « j'affiche une valeur, et je préviens quand elle change ». `Input` et `Range` composent le filtre produits. `Checkbox` appartient à la même famille mais **n'est pas utilisé** : la seule case du cours servait à filtrer les alertes, un critère que le sujet ne demande pas (voir § 4.3). |
+| `Input`, `Range`, `Checkbox` | **Standard** | Les trois atomes du cours (exercice 4) : ils ignorent le métier — « j'affiche une valeur, et je préviens quand elle change ». Tous les trois composent le filtre produits, exactement comme la `SearchBar` du cours (Input + Checkbox + Range). |
 | `RowProduct` / `OrderRow` | **Standard** | Présentation pure, pilotés entièrement par leurs `props`. |
 | `QuantitySelector` | **Standard** | Ignore le métier : affiche « une quantité bornée dans [0, max] ». Réutilisable hors du projet. |
-| `ProductFilter` | **Non standard** | Orchestrateur : compose les atomes de formulaire, agrège 5 critères (tous les attributs), totalement contrôlé, et **un port de sortie par filtre** — exactement la structure du modèle de composants du cours. |
+| `ProductFilter` | **Non standard** | Orchestrateur : compose les trois atomes, agrège les 5 critères d'attribut **et** la case « sous le seuil », totalement contrôlé, et **un port de sortie par filtre** — exactement la structure du modèle de composants du cours. |
 | `TableProducts` | **Non standard** | Composite : regroupe par catégorie et **fabrique** ses lignes (donnée dérivée calculée au rendu). |
 | `TableCategory` | **Non standard** | Composant « structurel » : il ne connaît qu'un titre de groupe et un nombre d'éléments, jamais un produit. |
 | `KpiCard` | **Non standard** | À facette : `props.children` — la carte fournit le cadre, l'appelant fournit le contenu. |
@@ -424,10 +424,9 @@ avec l'idée pour chacun :
 - **Un vrai système d'annulation multi-niveaux** : disproportionné pour un
   formulaire, et source de bugs d'historique difficiles à expliquer en soutenance.
 - **Les fonctions hors sujet**, retirées après une relecture du sujet : alertes de
-  stock sur la page Accueil, colonne « État » dans le tableau des produits, filtre
-  « alertes seulement », route de repli pour les URL inconnues. Le sujet ne demande
-  sur l'accueil que des indicateurs, la synthèse par catégorie et le nombre de
-  commandes passées.
+  stock sur la page Accueil, colonne « État » dans le tableau des produits, route de
+  repli pour les URL inconnues. Le sujet ne demande sur l'accueil que des indicateurs,
+  la synthèse par catégorie et le nombre de commandes passées.
 - **Rien d'autre** : les rares éléments conservés au-delà de l'énoncé sont listés et
   justifiés au § 4.4 — un écart assumé et écrit vaut mieux qu'un écart caché.
 
@@ -444,7 +443,7 @@ littéralement demandés. Ils sont listés ici, avec leur raison d'être :
 | Total de la commande et sous-total par ligne | conservés | un formulaire qui affiche des quantités sans total serait incomplet à l'usage ; la « forme libre » du sujet le permet |
 | Compteur « N produit(s) affiché(s) sur M » | conservé | retour d'information du filtre, sans effet sur les données |
 | `CATEGORIES` (`seed.js`) | conservé, **non utilisé** | liste de référence du catalogue (voir le commentaire du fichier) |
-| `Checkbox` (`components/form/`) | conservé, **non branché** | atome du modèle de composants du cours (exercice 4), conservé pour rester aligné sur ce modèle |
+| Case « Uniquement les produits sous le seuil » (page Produits) | conservée | ce n'est pas un filtre sur un **attribut** mais sur la **règle centrale du sujet** (quantité en dessous du seuil) : elle isole exactement ce que la page surligne, et elle donne un emploi réel au troisième atome du cours (`Checkbox`) — notre `ProductFilter` devient ainsi superposable à la `SearchBar` de l'exercice 4 |
 
 **Aucune ressource externe à l'exécution.** La feuille de style Bootstrap (5.3.8, la
 version du cours) est **versionnée dans le dépôt** (`public/vendor/bootstrap.min.css`)
