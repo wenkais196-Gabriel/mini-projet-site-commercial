@@ -10,28 +10,32 @@ skinparam ArrowFontSize 12
 skinparam nodesep 20
 skinparam ranksep 50
 
+package "src" #F1F5F9 {
+  component "App.jsx\n(cablage : provider + router)" as App <<configuration>>
+}
+
 package "src/pages" #E8F5E9 {
-  component "HomePage" as Accueil
-  component "ProductsPage" as Produits
-  component "OrderPage" as Commande
+  component "HomePage" as Accueil <<non standard>>
+  component "ProductsPage" as Produits <<non standard>>
+  component "OrderPage" as Commande <<non standard>>
 }
 
 package "src/components" #EAF1F8 {
-  component "Layout\n(gabarit des 3 pages)" as Layout
-  component "form/Input" as Input <<reutilisable>>
-  component "form/Range" as Range <<reutilisable>>
-  component "form/Checkbox" as Check <<disponible, non utilise>>
-  component "KpiCard" as KPI
-  component "ProductFilter" as Filtre
-  component "TableProducts" as Table
-  component "TableCategory" as Cat
-  component "RowProduct" as Row
-  component "OrderRow" as Ligne
-  component "QuantitySelector" as SelQ
+  component "Layout\n(gabarit des 3 pages)" as Layout <<non standard>>
+  component "form/Input" as Input <<standard>>
+  component "form/Range" as Range <<standard>>
+  component "form/Checkbox" as Check <<standard, non utilise>>
+  component "KpiCard" as KPI <<non standard>>
+  component "ProductFilter" as Filtre <<non standard>>
+  component "TableProducts" as Table <<non standard>>
+  component "TableCategory" as Cat <<non standard>>
+  component "RowProduct" as Row <<standard>>
+  component "OrderRow" as Ligne <<standard>>
+  component "QuantitySelector" as SelQ <<standard>>
 }
 
 package "src/store" #FFF4E5 {
-  component "DataContext.jsx" as Store <<etat partage>>
+  component "DataContext.jsx\n(etat partage)" as Store <<non standard>>
   component "selectors.js" as Sel <<fonctions pures>>
   component "state.js" as Etat <<transitions pures>>
   component "orderBuilder.js" as Builder <<pattern Builder>>
@@ -41,6 +45,9 @@ package "src/store" #FFF4E5 {
 package "src/data" #F4F6F8 {
   component "seed.js" as Seed <<donnees en dur>>
 }
+
+App --> Store : monte le provider
+App --> Layout : monte le routeur
 
 Accueil --> Store : useData()
 Produits --> Store : useData()
