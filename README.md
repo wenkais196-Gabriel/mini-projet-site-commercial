@@ -171,19 +171,48 @@ Fichiers à ne pas modifier sans accord (ils concernent les deux) :
 
 ## 7. Livrer sur Moodle
 
-Le dossier `node_modules` ne doit **pas** figurer dans le zip. Comme il n'est pas
-versionné, la commande suivante produit exactement le bon paquet :
+Le zip contient **deux choses** : le document de remise, et le dossier du projet.
 
-```bash
-git archive --format=zip -o "SONG-Wenkai_SUI-Wenhui.zip" HEAD
+```
+SONG-Wenkai_SUI-Wenhui.zip
+├── SONG-Wenkai_SUI-Wenhui.pdf        ← le document (analyse + diagrammes)
+└── mini-projet-site-commercial/      ← le dossier du projet, sans node_modules
 ```
 
-Le document de remise (analyse des design patterns + diagrammes) est déjà dans
-`docs/`, il est donc inclus automatiquement. Si Moodle exige un `.docx` ou un
-`.pdf` séparé, on l'exporte depuis `docs/analyse-design-patterns.md`.
+Le dossier `node_modules` ne doit **pas** figurer dans le zip ; comme il n'est pas
+versionné, `git archive` produit l'arborescence propre du projet :
 
-**Contenu du zip attendu par le sujet :** le dossier du projet sans
-`node_modules`, **et** un document avec l'analyse design pattern, le(s) diagramme(s)
-de composants, et les remarques éventuelles (dont « ce qui n'est pas complètement
-implémenté mais pour quoi on a des idées » — à ne pas oublier, c'est explicitement
-demandé).
+```bash
+# 1. le dossier du projet, prefixe par son nom
+git archive --format=zip --prefix=mini-projet-site-commercial/ -o project.zip HEAD
+
+# 2. le document de remise a la racine, a cote du dossier (script Python standard)
+python - <<'PY'
+import zipfile, os
+pdf = r"docs/SONG-Wenkai_SUI-Wenhui.pdf"
+out = "SONG-Wenkai_SUI-Wenhui.zip"
+with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+    z.write(pdf, os.path.basename(pdf))
+    with zipfile.ZipFile("project.zip") as p:
+        for name in p.namelist():
+            z.writestr(name, p.read(name))
+PY
+```
+
+Le document est `docs/SONG-Wenkai_SUI-Wenhui.pdf` (11 pages A4, figures vectorielles).
+Il est donc **déjà dans le dossier du projet**, et on le place aussi à la racine du zip
+pour qu'il soit visible au premier coup d'œil.
+
+**Régénérer le PDF** après une modification du compte-rendu — markdown → HTML →
+impression A4 par le navigateur, aucun outil à installer hors de npm :
+
+```bash
+npm i --no-save --no-package-lock marked playwright-core
+node docs/build-report.cjs
+```
+
+**Contenu du document attendu par le sujet :** l'analyse design pattern (les 8
+patterns, chacun avec sa présence — et s'il est complet —, sa compatibilité ou son
+incompatibilité), le(s) diagramme(s) de composants, et les remarques éventuelles
+(dont « ce qui n'est pas complètement implémenté mais pour quoi on a des idées » —
+à ne pas oublier, c'est explicitement demandé, et c'est le § 4.2 du document).
