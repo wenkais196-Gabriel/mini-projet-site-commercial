@@ -446,9 +446,10 @@ littéralement demandés. Ils sont listés ici, avec leur raison d'être :
 | `CATEGORIES` (`seed.js`) | conservé, **non utilisé** | liste de référence du catalogue (voir le commentaire du fichier) |
 | `Checkbox` (`components/form/`) | conservé, **non branché** | atome du modèle de composants du cours (exercice 4), conservé pour rester aligné sur ce modèle |
 
-**Dépendances externes : deux, et pas une de plus.** `react-router-dom` (imposé par le
-sujet) et la feuille de style **Bootstrap chargée par CDN** — c'est la convention du
-cours depuis l'exercice 4, inscrite comme contrainte dans `AGENTS.md` § 1.4. Conséquence
-assumée : la **mise en forme** suppose un accès réseau ; le **contenu et les
-fonctionnalités restent entièrement locaux** (aucune donnée ne vient du réseau, ce qui
-est l'exigence réelle du sujet : « pas de serveur de données »).
+**Aucune ressource externe à l'exécution.** La feuille de style Bootstrap (5.3.8, la
+version du cours) est **versionnée dans le dépôt** (`public/vendor/bootstrap.min.css`)
+au lieu d'être chargée par CDN : l'application se lance et se démontre **hors ligne**,
+sans accès à Internet ni réseau filtré. Le seul paquet externe du projet est
+`react-router-dom`, imposé par le sujet ; la contrainte correspondante d'`AGENTS.md`
+(§ 1.4) a été mise à jour. Le contrôle de bout en bout vérifie qu'aucune requête ne
+sort du domaine local.
