@@ -131,12 +131,20 @@ accord, c'est le fichier partagé le moins conflictuel).
 
 ## 6. Collaboration Git
 
-- `main` reste toujours fonctionnelle (`npm run build` passe).
-  **Personne ne pousse directement sur `main`.**
-- Une branche courte par tâche : `feat/filtres-produits`, `feat/formulaire-commande`…
+Trois niveaux seulement (projet à 2 personnes, une seule livraison) :
+
+| Branche | Rôle | Protection |
+|---|---|---|
+| `main` | **état livrable** — c'est ce que produit le zip de remise | PR obligatoire + **1 approbation** |
+| `dev` | **intégration** — tout le travail courant arrive ici d'abord | PR obligatoire, **auto-fusion autorisée** |
+| `feat/…`, `fix/…` | une tâche, une branche courte | aucune |
+
+Pourquoi un `dev` : `main` doit rester un état **démontrable et livrable**. `dev` sert
+de sas d'intégration ; comme il autorise l'auto-fusion, personne n'est bloqué parce
+que l'autre n'est pas disponible pour approuver.
 
 ```bash
-git switch main && git pull --rebase        # 1. partir de la dernière version
+git switch dev && git pull --rebase         # 1. partir de l'état intégré
 git switch -c feat/ma-tache                 # 2. créer sa branche
 
 # ... coder ...
@@ -145,7 +153,11 @@ npm test && npm run lint && npm run build   # 3. vérifier AVANT de commiter
 git add -A
 git commit -m "feat(produits): filtres sur les 5 attributs"
 git push -u origin feat/ma-tache            # 4. pousser
-gh pr create --fill                         # 5. ouvrir la PR ; l'autre relit et fusionne
+gh pr create --base dev --fill              # 5. PR vers dev (auto-fusion possible)
+
+# 6. avant la remise (et à chaque fois qu'on veut figer un état démontrable) :
+gh pr create --base main --head dev --title "Intégration avant remise"
+#    → cette PR-là exige l'approbation de l'autre membre
 ```
 
 Préfixes de commit : `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`.
