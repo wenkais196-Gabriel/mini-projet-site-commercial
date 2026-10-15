@@ -15,9 +15,12 @@ avec lui, on le signale au lieu de contourner.
    (pas de 4ᵉ page, pas de page de détail produit).
 3. **`react-router-dom` reste en 6.x** (le tutoriel du cours est en 6.30).
    Ne pas passer en 7 : les imports et la structure changent.
-4. **Bootstrap par CDN**, comme à l'exercice 4. Pas d'autre bibliothèque de
-   composants, pas de Tailwind, pas de CSS-in-JS, pas de fichier CSS par composant
-   (les états métier partagés sont dans `src/index.css`).
+4. **Bootstrap servi depuis le dépôt**, pas par CDN : `public/vendor/bootstrap.min.css`
+   (version figée 5.3.8 — celle du cours). L'application ne doit dépendre d'**aucune
+   ressource externe** à l'exécution : elle doit se lancer et se démontrer hors ligne
+   (amphithéâtre, réseau filtré). Pas d'autre bibliothèque de composants, pas de
+   Tailwind, pas de CSS-in-JS, pas de fichier CSS par composant (les états métier
+   partagés sont dans `src/index.css`).
 5. **Pas de bibliothèque de gestion d'état** (Redux, Zustand, MobX, Jotai…).
    La partie 2 du sujet demande d'expliquer les design patterns : les déléguer à une
    bibliothèque reviendrait à supprimer la réponse. L'état partagé est écrit à la
@@ -76,6 +79,7 @@ Deux langues, avec une frontière nette :
 - [ ] `npm run lint` : 0 avertissement
 - [ ] `npm test` : 0 échec
 - [ ] `node check/e2e.cjs` : 0 échec (voir `check/README.md`)
+- [ ] Aucune requête vers un domaine externe : l'application doit tenir hors ligne
 - [ ] Les 3 pages se naviguent sans rechargement, depuis et vers n'importe quelle autre
 - [ ] Un scénario complet passant par les 3 pages : commander → le stock baisse →
       le surlignage apparaît sur Produits → le compteur change sur Accueil

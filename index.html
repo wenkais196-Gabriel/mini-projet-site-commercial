@@ -5,11 +5,10 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Site commercial — Mini projet React</title>
-    <!-- Convention du cours (voir exercice 4) : Bootstrap par CDN, pas de CSS bundlé -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
+    <!-- Bootstrap 5.3.8, versionne dans le depot (public/vendor/) et non charge par
+         CDN : l'application n'a ainsi AUCUNE ressource externe a l'execution, elle
+         s'ouvre et se demonte hors ligne. Voir AGENTS.md 1.4 (contrainte mise a jour). -->
+    <link href="/vendor/bootstrap.min.css" rel="stylesheet" />
   </head>
   <body>
     <div id="root"></div>
