@@ -37,9 +37,16 @@ body {
 }
 
 /* --- Business states shared by Products / Order ------------------------ */
-/* Quantity ≤ threshold: one single definition, reused everywhere. */
+/* Quantity below the threshold: one single definition, reused everywhere. */
 .alert-row > td {
   background-color: #fff7ed;
+}
+
+/* Quantity 0: an EXTREME CASE of the above (0 is always below the threshold), given
+   its own colour so that "to reorder" and "out of stock" are distinguishable at a
+   glance — on the Products page as well as on the Order page. */
+.out-of-stock-row > td {
+  background-color: #fee2e2;
 }
 
 .badge-alert {

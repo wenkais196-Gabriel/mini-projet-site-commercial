@@ -193,6 +193,18 @@ const clearFilters = async (page) => {
   await page.uncheck("#filter-low-stock");
   await page.waitForTimeout(150);
 
+  /* Second derived criterion: out of stock (quantity 0). */
+  await page.check("#filter-out-of-stock");
+  await page.waitForTimeout(200);
+  ok(
+    "Products: la case « en rupture » ne garde que les produits a 0",
+    (await productRow(page, "Cerise").count()) === 1 &&
+      (await productRow(page, "Pomme").count()) === 0,
+    "Cerise (0) conservee, Pomme (8, sous le seuil mais pas en rupture) exclue",
+  );
+  await page.uncheck("#filter-out-of-stock");
+  await page.waitForTimeout(150);
+
   // Sorting (added for issue #2)
   await page.click('button:has-text("Prix")');
   await page.waitForTimeout(200);
@@ -207,9 +219,15 @@ const clearFilters = async (page) => {
     "Products: Orange (12/12, exactly at the threshold) is NOT highlighted",
     !((await productRow(page, "Orange").getAttribute("class")) ?? "").includes("alert-row"),
   );
+  ok("Products: Pomme (8/20, strictly below) IS highlighted", ((await productRow(page, "Pomme").getAttribute("class")) ?? "").includes("alert-row"));
+
+  /* Out of stock (0) is an extreme case of the alert: its own colour, not the same
+     one — otherwise the two situations would be indistinguishable. */
+  const outOfStockClass = (await productRow(page, "Cerise").getAttribute("class")) ?? "";
   ok(
-    "Products: Pomme (8/20, strictly below) IS highlighted",
-    ((await productRow(page, "Pomme").getAttribute("class")) ?? "").includes("alert-row"),
+    "Products: un produit en rupture a sa propre couleur (distincte de l'alerte)",
+    outOfStockClass.includes("out-of-stock-row") && !outOfStockClass.includes("alert-row"),
+    outOfStockClass || "(aucune classe)",
   );
   await page.screenshot({ path: "check/02-products.png", fullPage: true });
 
