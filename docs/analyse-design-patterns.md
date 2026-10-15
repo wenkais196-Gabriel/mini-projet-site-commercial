@@ -20,11 +20,11 @@ le `DataProvider`, monté au-dessus du router.
 
 ```
 App  (câblage : DataProvider + BrowserRouter)
-└── DataProvider              ← état partagé : { produits, commandes }
+└── DataProvider              ← état partagé : { products, orders }
     └── Layout                ← barre de navigation + <Outlet/>
-        ├── AccueilPage       ← lit uniquement des indicateurs dérivés
-        ├── ProduitsPage      ← orchestre FiltreProduits + TableProduits
-        └── CommandePage      ← orchestre le formulaire et demande une commande
+        ├── HomePage          ← lit uniquement des indicateurs dérivés
+        ├── ProductsPage      ← orchestre ProductFilter + TableProducts
+        └── OrderPage         ← orchestre le formulaire et demande une commande
 ```
 
 Deux séparations structurent tout le code :
@@ -87,7 +87,7 @@ Deux séparations structurent tout le code :
 
 | Pattern | Verdict | Où c'est / où ce serait | Effort |
 |---|---|---|---|
-| **MVC** | Présence partielle — version classique **incompatible** | Modèle = `store` + `selecteurs` ; Vue = composants ; Contrôleur = pages et gestionnaires d'événements | — |
+| **MVC** | Présence partielle — version classique **incompatible** | Modèle = `store` + `selectors` ; Vue = composants ; Contrôleur = pages et gestionnaires d'événements | — |
 | **Singleton** | **Présent** (sous une forme adaptée à React) | `DataProvider` + `useData()` : un seul état partagé, un seul point d'accès | — |
 | **Abstract Factory** | **Incompatible en l'état** (compatible si on introduit des familles) | Fabrique de lignes/labels par famille de produits | élevé |
 | **Builder** | **Présent** | `src/store/orderBuilder.js` — `OrderBuilder` | fait |
@@ -104,9 +104,9 @@ Deux séparations structurent tout le code :
 
 | MVC | Ici |
 |---|---|
-| Modèle | `src/store/DataContext.jsx` (état) + `src/store/selecteurs.js` (règles pures) |
+| Modèle | `src/store/DataContext.jsx` (état) + `src/store/selectors.js` (règles pures) |
 | Vue | tous les composants de `src/components/` |
-| Contrôleur | les pages (`ProduitsPage`, `CommandePage`) et leurs gestionnaires d'événements |
+| Contrôleur | les pages (`ProductsPage`, `OrderPage`) et leurs gestionnaires d'événements |
 
 *Pourquoi la version classique est incompatible.* Dans un MVC historique (Java,
 Swing, Struts), la Vue observe le Modèle et peut lui écrire : c'est un **flux en
@@ -126,7 +126,7 @@ plus qu'il ne rapporte.
 **Verdict — présent, sous une forme adaptée à React.**
 
 `App.jsx` monte **un seul** `<DataProvider>` : il n'existe qu'une seule instance de
-l'état `{ produits, commandes }` pour toute l'application. `useData()` est le
+l'état `{ products, orders }` pour toute l'application. `useData()` est le
 **point d'accès unique** : aucun composant ne peut créer une seconde copie des
 données. C'est la propriété essentielle du Singleton — accès contrôlé à une
 ressource unique — et c'est précisément ce qui rend les 3 pages cohérentes.
@@ -281,13 +281,13 @@ donnée, et il est automatiquement notifié (re-rendu) quand cette donnée chang
 les **observateurs**. Le cas est particulièrement net sur notre application :
 
 ```
-CommandePage → validerCommande() → l'état { produits, commandes } change
+OrderPage → saveOrder() → l'état { products, orders } change
         ├── Layout         re-rendu  → le compteur de commandes change
-        ├── AccueilPage    re-rendu  → les indicateurs changent
-        └── ProduitsPage   re-rendu  → le surlignage des produits change
+        ├── HomePage       re-rendu  → les indicateurs changent
+        └── ProductsPage   re-rendu  → le surlignage des produits change
 ```
 
-Aucune de ces trois pages n'est prévenue par `CommandePage` : elles observent la
+Aucune de ces trois pages n'est prévenue par `OrderPage` : elles observent la
 même source. C'est aussi ce qui rend possible l'exigence du sujet (« les données
 sont liées entre les pages virtuelles ») sans écrire une seule ligne de
 synchronisation manuelle.
@@ -356,7 +356,7 @@ Ce que l'application y gagne, concrètement :
   le mécanisme démontrable en soutenance sans ouvrir les outils de développement.
 
 *Coût réel.* Faible : de la logique pure (aucun JSX), concentrée dans un module, et
-19 tests dans `test/statutCommande.test.js` — dont la vérification exhaustive des
+19 tests dans `test/orderStatus.test.js` — dont la vérification exhaustive des
 couples (état, événement) pour prouver qu'aucune transition interdite ne passe.
 
 ---

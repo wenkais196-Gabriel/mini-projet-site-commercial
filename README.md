@@ -62,9 +62,9 @@ App  (câblage : provider de données + router)
 └── DataProvider              ← l'état partagé (produits + commandes)
     └── BrowserRouter
         └── Layout            ← barre de navigation commune + <Outlet/>
-            ├── AccueilPage
-            ├── ProduitsPage
-            └── CommandePage
+            ├── HomePage
+            ├── ProductsPage
+            └── OrderPage
 ```
 
 ```
@@ -92,7 +92,7 @@ Deux règles d'architecture à ne jamais casser :
 
 1. **Aucun composant ne lit `src/data/seed.js`** : tout passe par `useData()`.
    Sinon les pages cessent de voir les mêmes données.
-2. **Les calculs vivent dans `selecteurs.js`**, jamais dans un composant.
+2. **Les calculs vivent dans `selectors.js`**, jamais dans un composant.
    Une règle = un seul endroit = impossible de diverger entre deux pages.
 
 ---
@@ -121,11 +121,12 @@ annoncée avant d'être codée, sinon le binôme travaille sur deux versions dif
 
 | Qui | Périmètre | Fichiers |
 |---|---|---|
-| **A — SONG Wenkai** | Commande, architecture, compte-rendu | `pages/CommandePage.jsx`, `components/commande/**`, `store/**`, `docs/**` |
-| **B — SUI Wenhui** | Accueil, Produits, données | `pages/AccueilPage.jsx`, `pages/ProduitsPage.jsx`, `components/produits/**`, `components/indicateurs/**`, `data/seed.js` |
+| **A — SONG Wenkai** | Commande, architecture, compte-rendu | `src/pages/OrderPage.jsx`, `src/components/order/**`, `src/store/**`, `docs/**` |
+| **B — SUI Wenhui** | Accueil, Produits, données | `src/pages/HomePage.jsx`, `src/pages/ProductsPage.jsx`, `src/components/products/**`, `src/components/indicators/**`, `src/data/seed.js` |
+| **B — SUI Wenhui** | Atomes de formulaire partagés | `src/components/form/**` (Input, Checkbox, Range) |
 
 Chacun ne modifie que ses fichiers. `src/store/` n'est modifié que par A — si B a
-besoin d'un nouveau calcul, il le demande (ou l'ajoute dans `selecteurs.js` après
+besoin d'un nouveau calcul, il le demande (ou l'ajoute dans `selectors.js` après
 accord, c'est le fichier partagé le moins conflictuel).
 
 ---
