@@ -31,8 +31,10 @@ Deux séparations structurent tout le code :
 
 - **composants de présentation** (ne connaissent que leurs `props`, aucun état) vs
   **composants orchestrateurs** (les 3 pages : ce sont les seules à avoir un état) ;
-- **règles de calcul** (`src/store/selecteurs.js`, fonctions pures) séparées de
-  **l'état** (`src/store/DataContext.jsx`, transitions pures) et de **l'affichage**.
+- **règles métier** dans des modules **purs** — `selecteurs.js` (calculs et
+  validation), `etat.js` (transitions), `commandeBuilder.js` (construction d'une
+  commande), `statutCommande.js` (machine à états du formulaire) — séparées de la
+  **colle React** (`DataContext.jsx`) et de **l'affichage** (les composants).
 
 ---
 
@@ -87,11 +89,11 @@ Deux séparations structurent tout le code :
 | **MVC** | Présence partielle — version classique **incompatible** | Modèle = `store` + `selecteurs` ; Vue = composants ; Contrôleur = pages et gestionnaires d'événements | — |
 | **Singleton** | **Présent** (sous une forme adaptée à React) | `DataProvider` + `useData()` : un seul état partagé, un seul point d'accès | — |
 | **Abstract Factory** | **Incompatible en l'état** (compatible si on introduit des familles) | Fabrique de lignes/labels par famille de produits | élevé |
-| **Builder** | Compatible, non implémenté — pertinent | `CommandeBuilder.setClient().ajouterLigne(…).build()` | moyen |
+| **Builder** | **Présent** | `src/store/commandeBuilder.js` — `CommandeBuilder` | fait |
 | **Decorator** | Compatible, non implémenté — immédiat | HOC `avecSurlignage(Ligne)` ou fonction de formatage | faible |
-| **Command** | **Présence partielle** (les actions du store *sont* des objets-commandes) | Envelopper les transitions + pile d'historique → « annuler » | moyen |
+| **Command** | **Présent** | `src/store/etat.js` — objets-opérations + `annulerOperation` | fait |
 | **Observer** | **Présent** (assuré par React) | Abonnement des composants à l'état partagé | — |
-| **State** | Compatible, non implémenté (aujourd'hui : états *dérivés*) | Machine à états du statut de commande / de l'état produit | faible |
+| **State** | **Présent** | `src/store/statutCommande.js` — `TRANSITIONS` + `transitionner` | fait |
 
 ### 3.2 MVC
 
@@ -164,37 +166,36 @@ données (donc les 3 pages et le store), à la veille de la remise.
 
 ### 3.5 Builder
 
-**Verdict — compatible, non implémenté. C'est l'un des deux patterns les plus
-pertinents pour cette application.**
+**Verdict — présent.** Implémenté dans `src/store/commandeBuilder.js` et utilisé par
+`CommandePage`.
 
-*Pourquoi c'est pertinent.* Le sujet impose un formulaire de commande qui doit
-« respecter les contraintes de quantité disponible ». Une commande se construit
-aujourd'hui en agrégeant un objet à la main dans `CommandePage` :
-
-```js
-const lignes = Object.entries(quantites)
-  .map(([idProduit, quantite]) => ({ idProduit, quantite: Number(quantite) }))
-  .filter((ligne) => ligne.quantite > 0);
-```
-
-Ce code fait déjà trois choses (transformer, filtrer, valider à côté). Un Builder
-le remplacerait avantageusement, et il y a là **un vrai cas d'usage** :
+*Ce que le Builder apporte ici.* Le sujet impose un formulaire qui doit « respecter
+les contraintes de quantité disponible ». Ces contraintes sont désormais écrites à un
+seul endroit, et la page ne manipule plus un objet en cours d'assemblage :
 
 ```js
-const commande = new CommandeBuilder()
+const commande = new CommandeBuilder(produits)
   .setClient({ nom, prenom, email })
-  .ajouterLigne("P07", 2)      // refuse et signale si le stock est insuffisant
-  .ajouterLigne("P11", 4)
-  .build();                    // ne construit qu'une commande valide, ou lève/renvoie les erreurs
+  .ajouterLigne("P10", 12)     // refusée et signalée si le stock est insuffisant
+  .ajouterLigne("P01", 3)
+  .build();                    // → { valide, formulaire, lignes, erreurs, erreursParProduit }
 ```
 
-`build()` deviendrait le seul endroit où la commande est validée, et la page ne
-manipulerait plus qu'un objet en cours de construction. La méthode
-`ajouterLigne` peut consulter le stock via un `ProduitRepository` injecté — le
-Builder devient alors aussi un point de contrôle naturel.
+Deux niveaux de contrôle, volontairement :
 
-*Coût.* Moyen : une classe d'une quarantaine de lignes plus la réécriture du
-`onSubmit` de `CommandePage`.
+- `ajouterLigne` refuse **tout de suite** une ligne impossible (produit inconnu,
+  quantité non entière ou ≤ 0, stock insuffisant — en tenant compte des lignes déjà
+  ajoutées) ; la ligne fautive n'entre jamais dans la commande ;
+- `build()` délègue le jugement final au validateur : **le Builder assemble, le
+  validateur juge**. Une seule définition des règles, jamais deux.
+
+`build()` ne déclare `valide` que sous deux conditions : les règles générales passent
+**et** aucune ligne n'a été refusée en chemin — sinon on produirait une commande
+silencieusement différente de celle demandée.
+
+*Coût réel.* Une classe d'une centaine de lignes, la réécriture du `onSubmit` de
+`CommandePage`, et 14 tests dans `test/commandeBuilder.test.js` (refus, cumul des
+lignes, copies défensives, contrôle final).
 
 ### 3.6 Decorator
 
@@ -235,8 +236,8 @@ choisi de **ne pas** décorer `RowProduct` dans la version actuelle.
 
 ### 3.7 Command
 
-**Verdict — présence partielle : les actions de notre store *sont* déjà des
-objets-commandes ; ce qui manque est l'historique et l'annulation.**
+**Verdict — présent.** Implémenté dans `src/store/etat.js`, exposé par le store et
+déclenché par le bouton « Annuler » de la barre de navigation.
 
 *Où c'est déjà présent.* Le store reçoit des objets de la forme :
 
@@ -250,20 +251,23 @@ cet objet en modification d'état. C'est exactement la structure du pattern Comm
 **une demande encapsulée dans un objet**, que le destinataire exécute sans avoir à
 connaître l'appelant. `dispatch` joue le rôle d'invocateur.
 
-*Ce qui manque pour un Command complet.* Le pattern demande aussi de pouvoir
-mémoriser et **rejouer ou annuler** une commande. Il faudrait :
+*Ce qui a été ajouté pour en faire un Command complet.*
 
-1. une pile `historique[]` dans l'état ;
-2. une fonction inverse par action (`ANNULER_COMMANDE`) qui réincrémente le stock
-   et retire la commande ;
-3. un bouton « Annuler la dernière opération » — la barre de navigation s'y prête
-   (à côté de « Réinitialiser »).
+1. une pile `historique[]` dans l'état, qui ne contient que les opérations
+   **annulables** (les 3 commandes livrées avec l'application en sont exclues :
+   elles font partie des données de départ) ;
+2. un interpréteur inverse unique, `annulerOperation`, qui réincrémente le stock
+   prélevé et retire la commande — un seul endroit à maintenir, quel que soit le
+   nombre de types d'opérations ajoutés ensuite ;
+3. une action `ANNULER_DERNIERE_OPERATION` et le bouton « Annuler » dans la barre de
+   navigation, qui affiche la dernière opération annulable (« dernière opération :
+   commande C004 »).
 
-*Pourquoi ce serait cohérent avec la suite du sujet.* La partie 4 rendrait
-l'application démontrable en soutenance (« on commande, on annule, on voit le stock
-revenir et le surlignage disparaître »), et cela ne coûte que quelques dizaines de
-lignes — à condition de ne pas ouvrir la porte à un vrai undo/redo multi-niveaux,
-qui n'a pas de sens ici.
+*Ce que cela donne en démonstration.* On commande, on annule, et l'on voit le stock
+revenir **et** le surlignage disparaître sur la page Produits — l'inverse exact de la
+chaîne de données décrite au § 3.8. L'historique est volontairement limité à la
+dernière opération : un vrai undo/redo multi-niveaux serait disproportionné pour un
+formulaire et difficile à défendre en soutenance.
 
 ### 3.8 Observer
 
@@ -295,10 +299,11 @@ fournit déjà — donc un gain pédagogique contre une perte de simplicité.
 
 ### 3.9 State
 
-**Verdict — compatible, non implémenté : nous avons des états *dérivés*, pas encore
-de machine à états.**
+**Verdict — présent.** Implémenté dans `src/store/statutCommande.js` et piloté par la
+page Commande.
 
-*Où l'on en est.* L'état de santé d'un produit est **calculé** à la volée :
+*Où l'on en était, et ce qui reste vrai.* L'état de **santé d'un produit** est
+toujours *calculé* à la volée :
 
 ```js
 export function estEnAlerte(produit)  { return produit.quantite <= produit.seuil; }
@@ -306,12 +311,11 @@ export function estEnRupture(produit) { return produit.quantite === 0; }
 ```
 
 Un produit est donc « disponible », « à réapprovisionner » ou « en rupture » par
-déduction, à chaque rendu. C'est un bon choix : rien ne peut se désynchroniser
-(il ne peut pas exister un produit marqué « en rupture » qui aurait du stock).
-Mais ce n'est pas le pattern State : il n'y a ni objet d'état, ni transitions
-explicites, et le comportement de l'application ne change pas selon l'état.
+déduction, à chaque rendu. C'est un bon choix pour cette information : rien ne peut
+se désynchroniser (il ne peut pas exister un produit marqué « en rupture » qui aurait
+du stock). Une donnée dérivée ne mérite pas une machine à états.
 
-*Comment l'ajouter, là où c'est réellement utile : le cycle de vie d'une commande.*
+*Le cas d'usage que nous avons implémenté : le cycle de vie du formulaire de commande.*
 
 Un formulaire de commande a de vrais états et de vraies transitions :
 
@@ -323,14 +327,36 @@ Un formulaire de commande a de vrais états et de vraies transitions :
 | `Valide` | `Enregistrée` | clic sur « Valider » |
 | `Enregistrée` | `Brouillon` | nouvelle commande / annulation (cf. Command) |
 
-Aujourd'hui, ces états existent de façon implicite (variables `confirmation`,
-`rapport`). Les rendre explicites dans un objet `StatutCommande` avec
-`peutTransitionnerVers()` aurait deux avantages concrets : les messages affichés
-seraient pilotés par l'état (plus de combinaisons `si` imbriquées dans le JSX), et
-les transitions impossibles seraient refusées au lieu d'être simplement non prévues.
+Ces états existent maintenant **explicitement**, dans `STATUTS` et dans la table
+`TRANSITIONS` — la définition unique de ce qui est permis :
 
-*Coût.* Faible : c'est de la logique pure, testable, concentrée dans
-`selecteurs.js`. C'est le deuxième pattern que nous retiendrions avec le Builder.
+```js
+export const TRANSITIONS = {
+  [BROUILLON]:   { saisie: EN_SAISIE, verificationEchouee: INVALIDE },
+  [EN_SAISIE]:   { saisie: EN_SAISIE, effacement: BROUILLON,
+                   verificationReussie: VALIDE, verificationEchouee: INVALIDE },
+  [INVALIDE]:    { saisie: EN_SAISIE, effacement: BROUILLON,
+                   verificationReussie: VALIDE, verificationEchouee: INVALIDE },
+  [VALIDE]:      { saisie: EN_SAISIE, effacement: BROUILLON, enregistrement: ENREGISTREE },
+  [ENREGISTREE]: { saisie: EN_SAISIE, effacement: BROUILLON, nouvelleCommande: BROUILLON },
+};
+```
+
+Ce que l'application y gagne, concrètement :
+
+- **les messages sont pilotés par l'état** : seul `INVALIDE` affiche les erreurs
+  (`afficheLesErreurs`), seul `ENREGISTREE` affiche la confirmation
+  (`afficheLaConfirmation`) — plus une seule condition imbriquée dans le JSX ;
+- **les transitions impossibles sont refusées** : depuis `BROUILLON`, l'événement
+  `enregistrement` n'existe pas, donc on ne peut pas enregistrer une commande jamais
+  vérifiée ; `transitionner` renvoie alors l'état inchangé au lieu de planter (une
+  interface ne doit jamais casser sur une action de l'utilisateur) ;
+- **la machine est visible** : la page Commande affiche son état courant, ce qui rend
+  le mécanisme démontrable en soutenance sans ouvrir les outils de développement.
+
+*Coût réel.* Faible : de la logique pure (aucun JSX), concentrée dans un module, et
+19 tests dans `test/statutCommande.test.js` — dont la vérification exhaustive des
+couples (état, événement) pour prouver qu'aucune transition interdite ne passe.
 
 ---
 
@@ -348,18 +374,24 @@ les transitions impossibles seraient refusées au lieu d'être simplement non pr
 ### 4.2 Ce qui n'est pas complètement implémenté (et pour quoi on a des idées)
 
 Le sujet invite explicitement à signaler ces points — c'est un endroit où il ne faut
-pas être modeste :
+pas être modeste. Depuis la première version, trois patterns ont été **réellement
+implémentés** (Builder § 3.5, Command § 3.7, State § 3.9). Voici ce qui reste ouvert,
+avec l'idée pour chacun :
 
-1. **Builder de commande** (voir 3.5) : le code de `CommandePage` fait le travail
-   sans le pattern ; la classe `CommandeBuilder` est le prochain ajout.
-2. **Annulation de la dernière opération** (voir 3.7) : la pile d'historique n'est
-   pas en place, le `dispatch` est déjà au bon format pour l'accueillir.
-3. **Machine à états du formulaire** (voir 3.9) : les états existent de façon
-   implicite (`confirmation`, `rapport`).
-4. **Fabrique de produits** (voir 3.4) : volontairement écartée, faute de familles
-   réelles à instancier.
-5. **Filtres** : les 5 attributs sont couverts ; un tri par colonne et une
-   mémoïsation (chapitre memoisation du cours) restent à faire.
+1. **Fabrique abstraite de produits** (voir 3.4) : volontairement écartée, faute de
+   familles réelles à instancier. Le jour où les produits auront des variantes
+   (frais / sec / boisson, avec des attributs propres), c'est le premier pattern à
+   ajouter.
+2. **Decorator** (voir 3.6) : la décision de surlignage est aujourd'hui *dans*
+   `RowProduct`. L'extraire dans un HOC composerait plusieurs préoccupations sans
+   modifier le composant d'origine — peu de code, mais aucun intérêt tant qu'il n'y a
+   qu'une seule décoration à appliquer.
+3. **Historique multi-niveaux** : l'annulation est volontairement limitée à la
+   dernière opération. Un vrai undo/redo (ou un retour à un point précis) serait
+   disproportionné pour un formulaire et difficile à expliquer en soutenance.
+4. **Filtres de la page Produits** : les 5 attributs sont couverts ; le tri par
+   colonne et la mémoïsation (chapitre memoisation du cours) restent à faire.
+5. **Persistance** : aucune, et c'est un choix (voir 4.3).
 
 ### 4.3 Ce que nous avons volontairement refusé
 

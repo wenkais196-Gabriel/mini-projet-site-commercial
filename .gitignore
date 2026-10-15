@@ -20,3 +20,6 @@ npm-debug.log*
 # Fichiers de travail locaux (à ne pas pousser)
 *.tmp
 scratch/
+
+# Captures produites par la vérification de bout en bout (voir verif/)
+verif/*.png
