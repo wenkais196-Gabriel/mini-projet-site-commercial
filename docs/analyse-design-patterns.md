@@ -59,6 +59,19 @@ Deux séparations structurent tout le code :
 > (ils orchestrent, regroupent, composent ou cachent un état), alors que les
 > composants standard se contentent de **montrer** ce qu'on leur donne.
 
+**Pourquoi il n'y a pas d'atome `Button`.** Un atome de `form/` ne se justifie pas
+parce qu'un élément HTML existe, mais parce qu'il **normalise une valeur** : `Input`
+et `Select` ramènent un événement à une chaîne, `Range` à un nombre, `Checkbox` à un
+booléen. C'est cette conversion — et le libellé qui l'accompagne — qui paie la couche
+supplémentaire. Un `<button>` ne normalise rien : `onClick` transmet déjà exactement
+ce que l'appelant attend. Les neuf boutons du projet portent d'ailleurs **six**
+combinaisons de classes différentes (dont un `type="submit"`) ; un atome `Button`
+devrait donc ouvrir une échappatoire `className`/`variant` pour chacun, c'est-à-dire
+ne rien garantir — le « code décoratif » que le § 3.4 refuse pour Abstract Factory.
+Le contrôle qui, lui, porte une vraie règle (une quantité bornée dans `[0, max]`)
+existe déjà et il est composé, pas élémentaire : c'est `QuantitySelector`, classé
+standard ci-dessus.
+
 ### 2.2 Correspondance avec la terminologie du cours (CCM → React)
 
 | Terme du cours (CCM) | Réalisation dans ce projet |
