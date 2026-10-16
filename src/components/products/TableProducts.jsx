@@ -34,7 +34,6 @@ export function TableProducts({ products }) {
         <thead className="table-light">
           <tr>
             <th scope="col">Nom</th>
-            <th scope="col">Catégorie</th>
             <th scope="col" className="text-end">Prix</th>
             <th scope="col" className="text-end">Quantité</th>
             <th scope="col" className="text-end">Seuil</th>
