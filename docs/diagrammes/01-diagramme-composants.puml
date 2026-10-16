@@ -25,6 +25,7 @@ package "src/components" #EAF1F8 {
   component "form/Input" as Input <<standard>>
   component "form/Range" as Range <<standard>>
   component "form/Checkbox" as Check <<standard>>
+  component "form/Select" as Select <<standard>>
   component "KpiCard" as KPI <<non standard>>
   component "ProductFilter" as Filtre <<non standard>>
   component "TableProducts" as Table <<non standard>>
@@ -61,6 +62,7 @@ Produits --> Filtre
 Produits --> Table
 Filtre --> Input
 Filtre --> Check
+Filtre --> Select
 Filtre --> Range
 Table --> Cat
 Table --> Row : product

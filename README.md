@@ -199,7 +199,7 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
 PY
 ```
 
-Le document est `docs/SONG-Wenkai_SUI-Wenhui.pdf` (11 pages A4, figures vectorielles).
+Le document est `docs/SONG-Wenkai_SUI-Wenhui.pdf` (A4, figures vectorielles).
 Il est donc **déjà dans le dossier du projet**, et on le place aussi à la racine du zip
 pour qu'il soit visible au premier coup d'œil.
 

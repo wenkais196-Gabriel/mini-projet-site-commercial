@@ -62,7 +62,7 @@ Deux langues, avec une frontière nette :
 |---|---|
 | `src/store/**`, `docs/**`, `src/pages/OrderPage.jsx`, `src/components/order/**` | SONG Wenkai |
 | `src/pages/HomePage.jsx`, `src/pages/ProductsPage.jsx`, `src/components/products/**`, `src/components/indicators/**`, `src/data/seed.js` | SUI Wenhui |
-| `src/components/form/**` (atomes réutilisables : Input, Checkbox, Range) | SUI Wenhui (créés par lui) |
+| `src/components/form/**` (atomes réutilisables : Input, Checkbox, Range, puis Select) | SUI Wenhui, complété par SONG Wenkai |
 | `package.json`, `package-lock.json`, `.oxlintrc.json`, `AGENTS.md`, `README.md` | accord des deux |
 
 ## 5. Interdits explicites
