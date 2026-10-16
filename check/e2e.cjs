@@ -114,7 +114,7 @@ const clearFilters = async (page) => {
   const totalRows = await page.locator("tbody tr").count();
   const pepperBefore = productRow(page, "Poivron");
   const classBefore = (await pepperBefore.getAttribute("class")) ?? "";
-  const quantityBefore = (await pepperBefore.locator("td").nth(3).innerText()).trim();
+  const quantityBefore = (await pepperBefore.locator("td").nth(2).innerText()).trim();
   ok("Products: Poivron not highlighted at start", !classBefore.includes("alert-row"));
   ok("Products: Poivron stock = 22", quantityBefore === "22", `quantity = ${quantityBefore}`);
 
@@ -296,7 +296,7 @@ const clearFilters = async (page) => {
 
   const pepperAfter = productRow(page, "Poivron");
   const classAfter = (await pepperAfter.getAttribute("class")) ?? "";
-  const quantityAfter = (await pepperAfter.locator("td").nth(3).innerText()).trim();
+  const quantityAfter = (await pepperAfter.locator("td").nth(2).innerText()).trim();
 
   ok("Products: stock decremented by the order (22 -> 9)", quantityAfter === "9", `quantity = ${quantityAfter}`);
   ok("Products: the row becomes highlighted", classAfter.includes("alert-row"));
@@ -334,7 +334,7 @@ const clearFilters = async (page) => {
   const pepperRestored = productRow(page, "Poivron");
   ok(
     "Undo: the stock is given back (9 -> 22)",
-    (await pepperRestored.locator("td").nth(3).innerText()).trim() === "22",
+    (await pepperRestored.locator("td").nth(2).innerText()).trim() === "22",
   );
   ok(
     "Undo: the highlight disappears",
