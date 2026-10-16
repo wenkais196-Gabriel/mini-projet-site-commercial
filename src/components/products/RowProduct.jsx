@@ -12,6 +12,9 @@ import { isLowStock, isOutOfStock, formatPrice } from "../../store/selectors.js"
  * quantity is strictly below the restocking threshold. Out of stock (quantity 0) is an
  * extreme case of that rule and gets its own colour.
  *
+ * The category is NOT repeated on the row: the table is grouped by category and
+ * TableCategory already shows it once per group (see the report, § 4.1).
+ *
  * @param {{ product: import('../../data/seed.js').Product }} props
  */
 function rowClassOf(product) {
@@ -24,9 +27,6 @@ export function RowProduct({ product }) {
   return (
     <tr className={rowClassOf(product)}>
       <td className="fw-semibold">{product.name}</td>
-      <td>
-        <span className="badge text-bg-light">{product.category}</span>
-      </td>
       <td className="text-end font-monospace">{formatPrice(product.price)}</td>
       <td className="text-end">{product.quantity}</td>
       <td className="text-end text-muted">{product.threshold}</td>
