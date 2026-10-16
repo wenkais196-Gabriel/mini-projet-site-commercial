@@ -84,6 +84,7 @@ Deux langues, avec une frontière nette :
 - [ ] Un scénario complet passant par les 3 pages : commander → le stock baisse →
       le surlignage apparaît sur Produits → le compteur change sur Accueil
 - [ ] `docs/analyse-design-patterns.md` : les 8 patterns traités (3 cas chacun)
-- [ ] `docs/diagrammes/` : diagramme(s) de composants, source `.puml` **et** rendu
+- [ ] `docs/diagrammes/` : diagramme(s) de composants, **source** (`.puml`, ou
+      `build-ports.cjs` pour les figures 4 et 5) **et** rendu `.svg` + `.png`
 - [ ] Zip produit avec `git archive` (sans `node_modules`), nommé
       `SONG-Wenkai_SUI-Wenhui.zip`
