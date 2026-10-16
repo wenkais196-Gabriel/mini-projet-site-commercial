@@ -21,7 +21,7 @@ card "HomePage\netat : aucun" as Accueil {
 
 card "ProductsPage\netat : filters, sort" as Produits {
   card "ProductFilter\n{ values, bounds, categories, resultCount, totalCount,\n  onSearchChange, onCategoryChange, onMaxPriceChange,\n  onMaxQuantityChange, onMaxThresholdChange,\n  onOnlyLowStockChange, onOnlyOutOfStockChange, onReset }" as F {
-    card "Input / Checkbox / Range\n{ value, onChange }" as Atomes
+    card "Input / Checkbox / Range / Select\n{ value, onChange }" as Atomes
   }
   card "TableProducts\n{ products: 13 filtres }" as T {
     card "TableCategory\n{ category, count }" as C

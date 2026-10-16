@@ -44,10 +44,11 @@ Deux séparations structurent tout le code :
 
 | Composant | Catégorie | Ce qui le rend standard / non standard |
 |---|---|---|
-| `Input`, `Range`, `Checkbox` | **Standard** | Les trois atomes du cours (exercice 4) : ils ignorent le métier — « j'affiche une valeur, et je préviens quand elle change ». Tous les trois composent le filtre produits, exactement comme la `SearchBar` du cours (Input + Checkbox + Range). |
+| `Input`, `Range`, `Checkbox` | **Standard** | Les trois atomes du cours (exercice 4) : ils ignorent le métier — « j'affiche une valeur, et je préviens quand elle change ». Avec `Select`, tous composent le filtre produits, exactement comme la `SearchBar` du cours (Input + Checkbox + Range). |
+| `Select` | **Standard** | Quatrième atome, ajouté par le projet : même famille que les trois autres (un `id`, un libellé, une valeur, un `onChange`). Le filtre de catégorie l'utilise au lieu d'écrire un `<select>` à la main dans l'orchestrateur. Il n'existe pas dans l'exercice 4, où la recherche était purement textuelle. |
 | `RowProduct` / `OrderRow` | **Standard** | Présentation pure, pilotés entièrement par leurs `props`. |
 | `QuantitySelector` | **Standard** | Ignore le métier : affiche « une quantité bornée dans [0, max] ». Réutilisable hors du projet. |
-| `ProductFilter` | **Non standard** | Orchestrateur : compose les trois atomes, agrège les 5 critères d'attribut **et** les deux critères dérivés (« sous le seuil », « en rupture »), totalement contrôlé, et **un port de sortie par filtre** — exactement la structure du modèle de composants du cours. |
+| `ProductFilter` | **Non standard** | Orchestrateur : compose les quatre atomes (Input, Checkbox, Range, Select), agrège les 5 critères d'attribut **et** les deux critères dérivés (« sous le seuil », « en rupture »), totalement contrôlé, et **un port de sortie par filtre** — exactement la structure du modèle de composants du cours. |
 | `TableProducts` | **Non standard** | Composite : regroupe par catégorie et **fabrique** ses lignes (donnée dérivée calculée au rendu). |
 | `TableCategory` | **Non standard** | Composant « structurel » : il ne connaît qu'un titre de groupe et un nombre d'éléments, jamais un produit. |
 | `KpiCard` | **Non standard** | À facette : `props.children` — la carte fournit le cadre, l'appelant fournit le contenu. |
