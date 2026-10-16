@@ -1,13 +1,14 @@
 import { Input } from "../form/Input.jsx";
 import { Checkbox } from "../form/Checkbox.jsx";
 import { Range } from "../form/Range.jsx";
+import { Select } from "../form/Select.jsx";
 
 /**
  * ProductFilter — NON-STANDARD "orchestrator" component.
  *
  * Equivalence with the course: this is the SearchBar of exercise 4 — Input + Checkbox +
  * Range — extended to the five attributes of a product. It is fully CONTROLLED (it
- * stores no value) and it composes the three reusable atom components.
+ * stores no value) and it composes the four reusable atom components.
  *
  * ONE CALLBACK PER FILTER, exactly like the course's component model (which gives
  * one output port per filter). The naming follows the React convention
@@ -76,22 +77,14 @@ export function ProductFilter({
           </div>
 
           <div className="col-md-4">
-            <label className="form-label small mb-1" htmlFor="filter-category">
-              Catégorie
-            </label>
-            <select
+            <Select
               id="filter-category"
-              className="form-select form-select-sm"
+              label="Catégorie"
               value={values.category}
-              onChange={(event) => onCategoryChange(event.target.value)}
-            >
-              <option value="">Toutes les catégories</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
+              options={categories.map((category) => ({ value: category, label: category }))}
+              placeholder="Toutes les catégories"
+              onChange={onCategoryChange}
+            />
           </div>
 
           <div className="col-md-4">
