@@ -92,7 +92,14 @@ standard ci-dessus.
 | `docs/diagrammes/01-diagramme-composants.puml` `.png` | Diagramme de composants : dépendances, ports, points d'assemblage |
 | `docs/diagrammes/02-arbre-composants.puml` `.png` | Arbre des composants avec les valeurs réelles des `props` |
 | `docs/diagrammes/03-sequence-commande.puml` `.png` | Séquence : passer une commande, et l'effet sur les deux autres pages |
-| `docs/diagrammes/04-diagramme-ports.puml` `.png` | Les ports de chaque composant, dans la notation du cours (facettes, attributs, event sources) |
+| `docs/diagrammes/04-diagramme-ports.svg` `.png` | Les ports de chaque composant, dans la notation du cours (facettes, attributs, event sources) |
+| `docs/diagrammes/05-diagramme-assemblage.svg` `.png` | L'assemblage : câblage port à port et adaptateurs |
+
+Les figures 1 à 3 sont écrites en PlantUML (`.puml`). Les figures 4 et 5 sont générées
+en SVG par `node docs/diagrammes/build-ports.cjs` : PlantUML place toujours les ports
+en haut ou en bas d'un composant et ne permet pas de les colorer selon leur nature
+(demande de fonctionnalité #1766, toujours ouverte), ce qui interdisait de reproduire
+la notation du cours — voir § 2.4.
 
 **Figure 1 — Diagramme de composants de l'application**
 
@@ -110,20 +117,26 @@ standard ci-dessus.
 
 ![Ports des composants](diagrammes/04-diagramme-ports.png)
 
+**Figure 5 — L'assemblage : câblage des ports et adaptateurs**
+
+![Assemblage des ports](diagrammes/05-diagramme-assemblage.png)
+
 ### 2.4 Lecture par les ports (notation du cours)
 
 La figure 4 reprend la notation du modèle de composants vu en cours : « un composant
-est représenté comme une **collection de ports** ». Chaque boîte porte ses ports sur
-ses bords — un port d'entrée pour ce qu'elle reçoit, un port de sortie pour les
-événements qu'elle produit.
+est représenté comme une **collection de ports** ». Chaque boîte porte ses ports **sur
+ses bords** — le bord gauche pour ce qu'elle reçoit (*Receives From*), le bord droit
+pour les événements qu'elle produit (*Sends To*) — et la couleur du port dit sa nature.
+La figure 5 montre le **câblage** de ces ports, et les adaptateurs que les pages
+écrivent pour les relier.
 
-| Port (notation du cours) | Dans ce projet |
-|---|---|
-| **Facets** — interfaces offertes | la facette `children` de `KpiCard` ; le DOM rendu par un composant |
-| **Attributes** — propriétés configurables | les props de données : `id`, `label`, `value`, `max`, `disabled`… |
-| **Event Sources** — événements produits | les callbacks que le composant **appelle** : `onChange`, `onQuantityChange`… |
-| **Receptacles** — interfaces requises | le câblage exigé du parent : `onChange` doit exister, et un composant contrôlé exige que le parent porte l'état |
-| **Event Sinks** — événements consommés | les composants qui reçoivent sans rien produire : `RowProduct`, `TableCategory` |
+| Port (notation du cours) | Dans les figures | Dans ce projet |
+|---|---|---|
+| **Attributes** — propriétés configurables | bord gauche, en bleu | les props de données : `id`, `label`, `value`, `max`, `disabled`… |
+| **Facets** — interfaces offertes | bord gauche, en vert | la facette `children` de `KpiCard`, et la facette `useData()` de `DataProvider` |
+| **Event Sources** — événements produits | bord droit, en orange | les callbacks que le composant **appelle** : `onChange`, `onQuantityChange`… |
+| **Receptacles** — interfaces requises | bord droit (le port que le parent doit brancher) | le câblage exigé du parent : `onChange` doit exister, et un composant contrôlé exige que le parent porte l'état |
+| **Event Sinks** — événements consommés | absence de port droit | les composants qui reçoivent sans rien produire : `RowProduct`, `TableCategory` |
 
 **De l'atome vers la page** (les quatre bandes de la figure 4) :
 
@@ -142,13 +155,30 @@ ses bords — un port d'entrée pour ce qu'elle reçoit, un port de sortie pour 
 6. **`DataProvider`** est la **facette unique** : toutes les pages s'y connectent en
    « Receives From », et aucune page ne parle directement à une autre.
 
-> **Deux écarts assumés avec la diapositive du cours.** L'axe des ports est vertical
-> (haut = *Receives From*, bas = *Sends To*) au lieu d'horizontal, l'outil de tracé ne
-> permettant pas de fixer le côté ; les ports et leur sens sont identiques. Et le
-> projet n'a **aucun câblage de composant à composant** : les « adaptateurs » de la
-> diapositive « Composition » y sont les gestionnaires écrits par les pages
-> (`(value) => onQuantityChange(product.id, value)`), et la liaison passe par l'état
-> partagé au lieu de paires de ports. C'est le choix analysé au § 3.8 (Observer).
+**Le câblage et les adaptateurs** (figure 5). La figure montre les deux chaînes, avec le
+code réel des adaptateurs et sa référence dans les sources :
+
+- **chaîne de la page Produits** — les quatre atomes de `form/` remontent par leur port
+  de sortie unique vers le port d'entrée de `ProductFilter`, qui remonte à son tour ses
+  huit ports vers `ProductsPage`. L'adaptateur est écrit par la page :
+  `onSearchChange={changeFilter("search")}`, avec
+  `changeFilter = (key) => (value) => setFilters((prev) => ({ ...prev, [key]: value }))`
+  (`ProductsPage.jsx:59`) — c'est le currying qui fixe la clé du filtre, et
+  `ProductFilter` ne fait que transmettre ce port à l'atome concerné ;
+- **chaîne de la page Commande** — `QuantitySelector` remonte un nombre, `OrderRow` le
+  transforme en couple `(id, quantité)` avec
+  `(nextQuantity) => onQuantityChange(product.id, nextQuantity)` (`OrderRow.jsx:45`), et
+  `OrderPage` reçoit le tout ;
+- **les deux pages ne se parlent pas** : chacune lit le même état partagé
+  (`DataProvider`), et c'est l'état qui rend les deux chaînes solidaires — c'est le point
+  analysé au § 3.8 (Observer), et la figure 1 montre cette liaison.
+
+> **Un écart assumé avec la diapositive « Composition » du cours.** Le projet n'a
+> **aucun câblage de composant à composant** : les « adaptateurs » de la diapositive y
+> sont les gestionnaires écrits par les pages (ils sont écrits en clair sur la figure 5),
+> et la liaison passe par l'état partagé au lieu de paires de ports reliées deux à deux.
+> Le reste de la notation est respecté : ports sur les bords gauche et droit, couleur
+> selon la nature du port, facette, événements à sens unique.
 
 ---
 
