@@ -405,9 +405,10 @@ function figureAssemblage() {
   out.push(
     poly([[fx + 4, fy], [fx + 36, fy], [fx + 36, py], [page.x + page.inw - 7, py]], BOX_STROKE, 1.7, "arrow2"),
     text(page.x + page.bw, page.y - 12, "remontee : 8 ports, un par filtre", { size: 11, fill: "#b8762b", weight: "600", anchor: "end" }),
+    ...qs.draw(70, 500),
+    ...orow.draw(600, 500),
+    ...opage.draw(1080, 500),
   );
-
-  out.push(...qs.draw(70, 500), ...orow.draw(600, 500), ...opage.draw(1080, 500));
   const [qx, qy] = qs.anchors("out")[0];
   const [ox, oy] = orow.anchors("in")[0];
   const [rx, ry] = orow.anchors("out")[0];
