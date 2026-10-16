@@ -69,7 +69,7 @@ Deux séparations structurent tout le code :
 | facette | `props.children` de `KpiCard` |
 | réceptacle | `QuantitySelector.max`, et `DataProvider` qui reçoit `today` en prop |
 | configuration | le JSX de `App.jsx` : c'est le câblage de l'application |
-| état local | `useState` dans les 3 pages uniquement (`filters`, `customer`, `quantities`) |
+| état local | `useState` dans les pages orchestrateurs uniquement — `filters`/`sort` (ProductsPage), `customer`/`quantities`/`report`/`savedOrder`/`status` (OrderPage) |
 
 ### 2.3 Diagrammes
 
@@ -172,7 +172,7 @@ choix à faire derrière : du code décoratif.
    `ProduitBoisson` avec contenance) ;
 2. définir `FabriqueProduit` avec `creerLigne()` et `creerEtiquette()` ;
 3. `FabriqueFrais`, `FabriqueSec`, `FabriqueBoisson` en implémentations ;
-4. à l'affichage, `TableProduits` demanderait la fabrique de la ligne et
+4. à l'affichage, `TableProducts` demanderait la fabrique de la ligne et
    obtiendrait des composants cohérents sans jamais connaître le type réel.
 
 *Coût.* Élevé pour le gain : cela suppose de faire évoluer tout le modèle de
@@ -381,7 +381,7 @@ Ce que l'application y gagne, concrètement :
   le mécanisme démontrable en soutenance sans ouvrir les outils de développement.
 
 *Coût réel.* Faible : de la logique pure (aucun JSX), concentrée dans un module, et
-19 tests dans `test/orderStatus.test.js` — dont la vérification exhaustive des
+15 tests dans `test/orderStatus.test.js` — dont la vérification exhaustive des
 couples (état, événement) pour prouver qu'aucune transition interdite ne passe.
 
 ---
