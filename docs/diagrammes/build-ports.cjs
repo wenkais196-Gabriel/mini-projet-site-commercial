@@ -24,6 +24,10 @@
        node docs/diagrammes/build-ports.cjs
 
    playwright-core est optionnel : sans lui, seuls les .svg sont ecrits.
+
+   Ce fichier est analyse par SonarCloud avec le reste du depot (le « new code »
+   doit rester propre) : les helpers prennent donc un objet de style plutot qu'une
+   longue liste de parametres, et aucun `await` ne reste dans une boucle.
    ========================================================================== */
 
 const fs = require("node:fs");
@@ -38,6 +42,9 @@ const INK = "#1c1c1c";
 const BOX_FILL = "#ffffff";
 const BOX_STROKE = "#4a5568";
 const NAME = "#123a5e";
+const LABEL = "#22313f";
+const NOTE = "#5b6b7c";
+const CAPTION = "#42566b";
 const C_ATT = ["#cfe3ff", "#3f6f9f"]; // attribut recu
 const C_FAC = ["#c8e6c9", "#4f8a53"]; // facette (interface offerte)
 const C_EVT = ["#ffd9a8", "#b8762b"]; // event source (evenement produit)
@@ -69,16 +76,20 @@ function tw(str, size) {
   return w * size * 1.04;
 }
 
-const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const esc = (s) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 
-function rect(x, y, w, h, fill, stroke, rx = 6, sw = 1.2, shadow = false) {
+/** rectangle ; le style (rayon, epaisseur, ombre) est un objet */
+function rect(x, y, w, h, fill, stroke, style = {}) {
+  const { rx = 6, sw = 1.2, shadow = false } = style;
   const sh = shadow ? ' filter="url(#sh)"' : "";
   return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(
     1,
   )}" rx="${rx}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${sh}/>`;
 }
 
-function text(x, y, s, size = 12, fill = INK, weight = "normal", anchor = "start", italic = false, mono = false) {
+/** texte ; tout ce qui n'est pas la position passe par l'objet de style */
+function text(x, y, s, style = {}) {
+  const { size = 12, fill = INK, weight = "normal", anchor = "start", italic = false, mono = false } = style;
   const it = italic ? ' font-style="italic"' : "";
   const ff = mono ? MONO : FONT;
   return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-family="${ff}" font-size="${size}" fill="${fill}" font-weight="${weight}" text-anchor="${anchor}"${it}>${esc(
@@ -137,19 +148,23 @@ class Comp {
   draw(x, y) {
     this.x = x;
     this.y = y;
-    const out = [rect(x + this.inw, y, this.bw, this.bh, BOX_FILL, BOX_STROKE, 6, 1.5, true)];
+    const out = [
+      rect(x + this.inw, y, this.bw, this.bh, BOX_FILL, BOX_STROKE, { rx: 6, sw: 1.5, shadow: true }),
+    ];
     const ny = y + this.bh / 2 - (this.note ? 9 : 7);
-    out.push(text(x + this.inw + this.bw / 2, ny + 5, this.name, S_NAME, NAME, "600", "middle"));
+    out.push(text(x + this.inw + this.bw / 2, ny + 5, this.name, { size: S_NAME, fill: NAME, weight: "600", anchor: "middle" }));
     if (this.note) {
-      out.push(text(x + this.inw + this.bw / 2, ny + 20, this.note, S_NOTE, "#5b6b7c", "normal", "middle"));
+      out.push(text(x + this.inw + this.bw / 2, ny + 20, this.note, { size: S_NOTE, fill: NOTE, anchor: "middle" }));
     }
     for (const side of ["in", "out"]) {
       const ports = side === "in" ? this.ins : this.outs;
       ports.forEach((p, i) => {
         const { cx, cy, cw } = this.chipBox(side, i);
         const [fill, stroke] = C_KIND[p.kind];
-        out.push(rect(cx, cy, cw, PH, fill, stroke, 3.5, 1.0));
-        out.push(text(cx + cw / 2, cy + PH - 5.0, p.label, S_CHIP, "#22313f", "normal", "middle"));
+        out.push(
+          rect(cx, cy, cw, PH, fill, stroke, { rx: 3.5, sw: 1.0 }),
+          text(cx + cw / 2, cy + PH - 5.0, p.label, { size: S_CHIP, fill: LABEL, anchor: "middle" }),
+        );
       });
     }
     return out;
@@ -191,8 +206,8 @@ function band(x, y, w, title, comps, colour, perRowW) {
   const h = yy - gapy + pad - y;
   return {
     svg: [
-      rect(x, y, w, h, fill, stroke, 10, 1.3),
-      text(x + pad, y + 20, title, 13, "#33475b", "600"),
+      rect(x, y, w, h, fill, stroke, { rx: 10, sw: 1.3 }),
+      text(x + pad, y + 20, title, { size: 13, fill: "#33475b", weight: "600" }),
       ...out,
     ],
     h,
@@ -201,8 +216,8 @@ function band(x, y, w, title, comps, colour, perRowW) {
 
 function legendBlock(x, y, w) {
   const out = [
-    rect(x, y, w, 104, "#fbfcfd", "#c9d3dd", 8, 1),
-    text(x + 16, y + 24, "Notation du cours (CCM) - un composant est une collection de ports", 12.5, NAME, "600"),
+    rect(x, y, w, 104, "#fbfcfd", "#c9d3dd", { rx: 8, sw: 1 }),
+    text(x + 16, y + 24, "Notation du cours (CCM) - un composant est une collection de ports", { size: 12.5, fill: NAME, weight: "600" }),
   ];
   const items = [
     ["attribut recu (props de donnees)", C_ATT],
@@ -211,8 +226,10 @@ function legendBlock(x, y, w) {
   ];
   let cx = x + 16;
   for (const [label, [f, s]] of items) {
-    out.push(rect(cx, y + 38, 24, 16, f, s, 3.5, 1));
-    out.push(text(cx + 32, y + 51, label, 11.5, INK));
+    out.push(
+      rect(cx, y + 38, 24, 16, f, s, { rx: 3.5, sw: 1 }),
+      text(cx + 32, y + 51, label, { size: 11.5, fill: INK }),
+    );
     cx += 32 + tw(label, 11.5) + 46;
   }
   out.push(
@@ -220,17 +237,13 @@ function legendBlock(x, y, w) {
       x + 16,
       y + 76,
       "Receives From = bord gauche (attributs et facette).   Sends To = bord droit (event sources).   Un port = une porte :",
-      11.5,
-      "#42566b",
+      { size: 11.5, fill: CAPTION },
     ),
-  );
-  out.push(
     text(
       x + 16,
       y + 92,
       "aucun composant n'en appelle un autre directement, la liaison passe par l'etat partage (voir figure 1 et section 3.8).",
-      11.5,
-      "#42566b",
+      { size: 11.5, fill: CAPTION },
     ),
   );
   return out;
@@ -319,9 +332,9 @@ function figureCatalogue() {
   const H = y + 128;
   const out = [
     ...svgOpen(W, H),
-    rect(0, 0, W, H, "#ffffff", "#ffffff", 0, 0),
-    text(PADX, 36, "Les ports des composants - notation du cours (CCM)", 21, NAME, "700"),
-    text(PADX, 58, "Ce que chaque composant recoit (bord gauche) et ce qu'il produit (bord droit).", 12.5, "#5b6b7c"),
+    rect(0, 0, W, H, "#ffffff", "#ffffff", { rx: 0, sw: 0 }),
+    text(PADX, 36, "Les ports des composants - notation du cours (CCM)", { size: 21, fill: NAME, weight: "700" }),
+    text(PADX, 58, "Ce que chaque composant recoit (bord gauche) et ce qu'il produit (bord droit).", { size: 12.5, fill: NOTE }),
     ...body,
     ...legendBlock(PADX, H - 120, W - 2 * PADX),
     "</svg>",
@@ -363,57 +376,64 @@ function figureAssemblage() {
 
   const out = [
     ...svgOpen(W, H),
-    rect(0, 0, W, H, "#ffffff", "#ffffff", 0, 0),
-    text(24, 36, "Assemblage : cablage des ports et adaptateurs", 21, NAME, "700"),
-    text(24, 58, "Le parent fournit les attributs et ecrit l'adaptateur ; l'enfant remonte son evenement par son port de sortie.", 12.5, "#5b6b7c"),
-    rect(24, 76, W - 48, 324, "#eff6ff", "#a8c4e0", 10, 1.3),
-    text(42, 100, "Chaine de la page Produits", 13, "#33475b", "600"),
-    rect(24, 416, W - 48, 268, "#f4f8f1", "#b3cba4", 10, 1.3),
-    text(42, 440, "Chaine de la page Commande", 13, "#33475b", "600"),
+    rect(0, 0, W, H, "#ffffff", "#ffffff", { rx: 0, sw: 0 }),
+    text(24, 36, "Assemblage : cablage des ports et adaptateurs", { size: 21, fill: NAME, weight: "700" }),
+    text(24, 58, "Le parent fournit les attributs et ecrit l'adaptateur ; l'enfant remonte son evenement par son port de sortie.", { size: 12.5, fill: NOTE }),
+    rect(24, 76, W - 48, 324, "#eff6ff", "#a8c4e0", { rx: 10, sw: 1.3 }),
+    text(42, 100, "Chaine de la page Produits", { size: 13, fill: "#33475b", weight: "600" }),
+    rect(24, 416, W - 48, 268, "#f4f8f1", "#b3cba4", { rx: 10, sw: 1.3 }),
+    text(42, 440, "Chaine de la page Commande", { size: 13, fill: "#33475b", weight: "600" }),
   ];
 
   atoms.forEach((a, i) => out.push(...a.draw(70, 128 + i * 62)));
-  out.push(...pf.draw(560, 168));
-  out.push(...page.draw(1080, 236));
+  out.push(...pf.draw(560, 168), ...page.draw(1080, 236));
 
   const [ex, ey] = pf.anchors("in")[0];
   for (const a of atoms) {
     const [sx, sy] = a.anchors("out")[0];
     out.push(poly([[sx + 4, sy], [sx + 30, sy], [sx + 30, ey], [ex - 7, ey]], BOX_STROKE, 1.5));
   }
-  out.push(text(560, 150, "4 ports de sortie -> 1 port d'entree", 11, "#b8762b", "600"));
-  out.push(text(560, 358, "l'adaptateur est ecrit par la page (ProductsPage.jsx:86) :", 10.5, "#5b6b7c"));
-  out.push(text(560, 374, 'onSearchChange={changeFilter("search")}', 10.5, "#22313f", "normal", "start", false, true));
   out.push(
-    text(560, 388, "changeFilter = (key) => (value) => setFilters((prev) => ({ ...prev, [key]: value }))", 10.5, "#5b6b7c", "normal", "start", false, true),
+    text(560, 150, "4 ports de sortie -> 1 port d'entree", { size: 11, fill: "#b8762b", weight: "600" }),
+    text(560, 358, "l'adaptateur est ecrit par la page (ProductsPage.jsx:86) :", { size: 10.5, fill: NOTE }),
+    text(560, 374, 'onSearchChange={changeFilter("search")}', { size: 10.5, fill: LABEL, mono: true }),
+    text(560, 388, "changeFilter = (key) => (value) => setFilters((prev) => ({ ...prev, [key]: value }))", { size: 10.5, fill: NOTE, mono: true }),
   );
 
   const [fx, fy] = pf.anchors("out")[3];
   const py = page.y + page.bh / 2;
-  out.push(poly([[fx + 4, fy], [fx + 36, fy], [fx + 36, py], [page.x + page.inw - 7, py]], BOX_STROKE, 1.7, "arrow2"));
-  out.push(text(page.x + page.bw, page.y - 12, "remontee : 8 ports, un par filtre", 11, "#b8762b", "600", "end"));
-
-  out.push(...qs.draw(70, 500));
-  out.push(...orow.draw(600, 500));
-  out.push(...opage.draw(1080, 500));
+  out.push(
+    poly([[fx + 4, fy], [fx + 36, fy], [fx + 36, py], [page.x + page.inw - 7, py]], BOX_STROKE, 1.7, "arrow2"),
+    text(page.x + page.bw, page.y - 12, "remontee : 8 ports, un par filtre", { size: 11, fill: "#b8762b", weight: "600", anchor: "end" }),
+    ...qs.draw(70, 500),
+    ...orow.draw(600, 500),
+    ...opage.draw(1080, 500),
+  );
   const [qx, qy] = qs.anchors("out")[0];
   const [ox, oy] = orow.anchors("in")[0];
-  out.push(poly([[qx + 4, qy], [qx + 44, qy], [qx + 44, oy], [ox - 7, oy]], BOX_STROKE, 1.5));
-  out.push(text(455, 470, "adaptateur ecrit par OrderRow (OrderRow.jsx:45) :", 10.5, "#5b6b7c"));
-  out.push(text(455, 486, "(nextQuantity) => onQuantityChange(product.id, nextQuantity)", 10.5, "#22313f", "normal", "start", false, true));
   const [rx, ry] = orow.anchors("out")[0];
   const ey2 = opage.y + opage.bh / 2;
-  out.push(poly([[rx + 4, ry], [rx + 34, ry], [rx + 34, ey2], [opage.x + opage.inw - 7, ey2]], BOX_STROKE, 1.7, "arrow2"));
-
   out.push(
-    text(24, 716, "Fleches grises : les attributs descendent.  Fleches oranges : les evenements remontent ; les deux sens passent par les memes ports.", 11, "#42566b"),
+    poly([[qx + 4, qy], [qx + 44, qy], [qx + 44, oy], [ox - 7, oy]], BOX_STROKE, 1.5),
+    text(455, 470, "adaptateur ecrit par OrderRow (OrderRow.jsx:45) :", { size: 10.5, fill: NOTE }),
+    text(455, 486, "(nextQuantity) => onQuantityChange(product.id, nextQuantity)", { size: 10.5, fill: LABEL, mono: true }),
+    poly([[rx + 4, ry], [rx + 34, ry], [rx + 34, ey2], [opage.x + opage.inw - 7, ey2]], BOX_STROKE, 1.7, "arrow2"),
+    text(24, 716, "Fleches grises : les attributs descendent.  Fleches oranges : les evenements remontent ; les deux sens passent par les memes ports.", { size: 11, fill: CAPTION }),
+    text(24, 732, "Les deux pages ne se parlent pas : chacune lit le meme etat partage (DataProvider, figure 1) et c'est l'etat qui rend les donnees solidaires.", { size: 11, fill: CAPTION }),
+    "</svg>",
   );
-  out.push(
-    text(24, 732, "Les deux pages ne se parlent pas : chacune lit le meme etat partage (DataProvider, figure 1) et c'est l'etat qui rend les donnees solidaires.", 11, "#42566b"),
-  );
-  out.push("</svg>");
   fs.writeFileSync(path.join(OUT, "05-diagramme-assemblage.svg"), out.join("\n"));
   return { file: "05-diagramme-assemblage.svg", w: W, h: H };
+}
+
+/** capture une figure en PNG (apercu GitHub) */
+async function capture(browser, { file, w, h }) {
+  const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 2 });
+  await page.goto(pathToFileURL(path.join(OUT, file)).href, { waitUntil: "load" });
+  await page.waitForTimeout(250);
+  const el = await page.$("svg");
+  await (el || page).screenshot({ path: path.join(OUT, file.replace(/\.svg$/, ".png")) });
+  await page.close();
 }
 
 /** rendu PNG (affichage GitHub), si playwright-core est disponible */
@@ -426,19 +446,17 @@ async function rasterize(svgs) {
     return;
   }
   const browser = await chromium.launch({ channel: "msedge" });
-  for (const { file, w, h } of svgs) {
-    const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 2 });
-    await page.goto(pathToFileURL(path.join(OUT, file)).href, { waitUntil: "load" });
-    await page.waitForTimeout(250);
-    const el = await page.$("svg");
-    await (el || page).screenshot({ path: path.join(OUT, file.replace(/\.svg$/, ".png")) });
-    await page.close();
-  }
+  await Promise.all(svgs.map((svg) => capture(browser, svg)));
   await browser.close();
 }
 
-(async () => {
+async function main() {
   const svgs = [figureCatalogue(), figureAssemblage()];
-  for (const s of svgs) console.log(`${s.file}  ${s.w} x ${s.h}`);
+  svgs.forEach((s) => console.log(`${s.file}  ${s.w} x ${s.h}`));
   await rasterize(svgs);
-})();
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
