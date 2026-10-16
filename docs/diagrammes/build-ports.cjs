@@ -395,7 +395,7 @@ function figureAssemblage() {
   }
   out.push(
     text(560, 150, "4 ports de sortie -> 1 port d'entree", { size: 11, fill: "#b8762b", weight: "600" }),
-    text(560, 358, "l'adaptateur est ecrit par la page (ProductsPage.jsx:86) :", { size: 10.5, fill: NOTE }),
+    text(560, 358, "l'adaptateur est ecrit par la page (ProductsPage.jsx) :", { size: 10.5, fill: NOTE }),
     text(560, 374, 'onSearchChange={changeFilter("search")}', { size: 10.5, fill: LABEL, mono: true }),
     text(560, 388, "changeFilter = (key) => (value) => setFilters((prev) => ({ ...prev, [key]: value }))", { size: 10.5, fill: NOTE, mono: true }),
   );
@@ -415,7 +415,7 @@ function figureAssemblage() {
   const ey2 = opage.y + opage.bh / 2;
   out.push(
     poly([[qx + 4, qy], [qx + 44, qy], [qx + 44, oy], [ox - 7, oy]], BOX_STROKE, 1.5),
-    text(455, 470, "adaptateur ecrit par OrderRow (OrderRow.jsx:45) :", { size: 10.5, fill: NOTE }),
+    text(455, 470, "adaptateur ecrit par OrderRow (OrderRow.jsx) :", { size: 10.5, fill: NOTE }),
     text(455, 486, "(nextQuantity) => onQuantityChange(product.id, nextQuantity)", { size: 10.5, fill: LABEL, mono: true }),
     poly([[rx + 4, ry], [rx + 34, ry], [rx + 34, ey2], [opage.x + opage.inw - 7, ey2]], BOX_STROKE, 1.7, "arrow2"),
     text(24, 716, "Fleches grises : les attributs descendent.  Fleches oranges : les evenements remontent ; les deux sens passent par les memes ports.", { size: 11, fill: CAPTION }),
