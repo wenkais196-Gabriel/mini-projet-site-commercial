@@ -61,7 +61,7 @@
 <polyline points="385.6,272.0 411.6,272.0 411.6,254.0 553.0,254.0" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
 <polyline points="358.2,334.0 384.2,334.0 384.2,254.0 553.0,254.0" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
 <text x="560.0" y="150.0" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="11" fill="#b8762b" font-weight="600" text-anchor="start">4 ports de sortie -&gt; 1 port d'entree</text>
-<text x="560.0" y="358.0" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="10.5" fill="#5b6b7c" font-weight="normal" text-anchor="start">l'adaptateur est ecrit par la page (ProductsPage.jsx:86) :</text>
+<text x="560.0" y="358.0" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="10.5" fill="#5b6b7c" font-weight="normal" text-anchor="start">l'adaptateur est ecrit par la page (ProductsPage.jsx) :</text>
 <text x="560.0" y="374.0" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#22313f" font-weight="normal" text-anchor="start">onSearchChange={changeFilter("search")}</text>
 <text x="560.0" y="388.0" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#5b6b7c" font-weight="normal" text-anchor="start">changeFilter = (key) =&gt; (value) =&gt; setFilters((prev) =&gt; ({ ...prev, [key]: value }))</text>
 <polyline points="983.8,243.0 1015.8,243.0 1015.8,256.5 1073.0,256.5" fill="none" stroke="#4a5568" stroke-width="1.7" marker-end="url(#arrow2)"/>
@@ -83,7 +83,7 @@
 <text x="1170.0" y="516.5" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="14.5" fill="#123a5e" font-weight="600" text-anchor="middle">OrderPage</text>
 <text x="1170.0" y="531.5" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="10.5" fill="#5b6b7c" font-weight="normal" text-anchor="middle">porte l'etat : quantities</text>
 <polyline points="413.7,520.5 453.7,520.5 453.7,520.0 593.0,520.0" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#arrow)"/>
-<text x="455.0" y="470.0" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="10.5" fill="#5b6b7c" font-weight="normal" text-anchor="start">adaptateur ecrit par OrderRow (OrderRow.jsx:45) :</text>
+<text x="455.0" y="470.0" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="10.5" fill="#5b6b7c" font-weight="normal" text-anchor="start">adaptateur ecrit par OrderRow (OrderRow.jsx) :</text>
 <text x="455.0" y="486.0" font-family="Consolas, 'Courier New', monospace" font-size="10.5" fill="#22313f" font-weight="normal" text-anchor="start">(nextQuantity) =&gt; onQuantityChange(product.id, nextQuantity)</text>
 <polyline points="1002.4,520.0 1032.4,520.0 1032.4,520.5 1073.0,520.5" fill="none" stroke="#4a5568" stroke-width="1.7" marker-end="url(#arrow2)"/>
 <text x="24.0" y="716.0" font-family="Segoe UI, Helvetica Neue, Arial, sans-serif" font-size="11" fill="#42566b" font-weight="normal" text-anchor="start">Fleches grises : les attributs descendent.  Fleches oranges : les evenements remontent ; les deux sens passent par les memes ports.</text>
