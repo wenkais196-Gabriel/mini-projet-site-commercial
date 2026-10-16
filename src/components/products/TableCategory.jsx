@@ -13,7 +13,7 @@
 export function TableCategory({ category, count }) {
   return (
     <tr className="table-secondary">
-      <td colSpan={6} className="fw-semibold">
+      <td colSpan={5} className="fw-semibold">
         {category}
         <span className="text-muted fw-normal ms-2">
           {count} produit{count > 1 ? "s" : ""}
