@@ -76,14 +76,15 @@ src/
   store/orderBuilder.js      construction d'une commande (pattern Builder)
   store/orderStatus.js       machine à états du formulaire (pattern State)
   pages/                     1 fichier = 1 page virtuelle (orchestration + état local)
-  components/form/           atomes réutilisables : Input, Checkbox, Range
+  components/form/           atomes réutilisables : Input, Range, Checkbox, Select
   components/products/       RowProduct, TableCategory, TableProducts, ProductFilter
   components/order/          OrderRow, QuantitySelector
   components/indicators/     KpiCard
   components/layout/         Layout (barre de navigation + commandes globales)
 docs/
   analyse-design-patterns.md document de remise (partie 2)
-  diagrammes/                diagrammes de composants (sources .puml + rendus)
+  diagrammes/                diagrammes de composants (.puml + rendus .svg/.png ;
+                             figures 4 et 5 générées par build-ports.cjs)
 test/                        tests unitaires des modules purs (node --test, 0 dépendance)
 check/                       vérification de bout en bout dans un navigateur (outil)
 ```
@@ -209,6 +210,14 @@ impression A4 par le navigateur, aucun outil à installer hors de npm :
 ```bash
 npm i --no-save --no-package-lock marked playwright-core
 node docs/build-report.cjs
+```
+
+**Régénérer les figures 4 et 5** (les ports et l'assemblage) après une modification :
+elles sont écrites en SVG par un script du dépôt, PlantUML ne sachant pas placer un
+port sur le bord gauche ou droit d'un composant (voir le § 2.4 du document) :
+
+```bash
+node docs/diagrammes/build-ports.cjs
 ```
 
 **Contenu du document attendu par le sujet :** l'analyse design pattern (les 8
