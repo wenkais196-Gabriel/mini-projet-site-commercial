@@ -50,7 +50,7 @@ Deux séparations structurent tout le code :
 | `QuantitySelector` | **Standard** | Ignore le métier : affiche « une quantité bornée dans [0, max] ». Réutilisable hors du projet. |
 | `ProductFilter` | **Non standard** | Orchestrateur : compose les quatre atomes (Input, Checkbox, Range, Select), agrège les 5 critères d'attribut **et** les deux critères dérivés (« sous le seuil », « en rupture »), totalement contrôlé, et **un port de sortie par filtre** — exactement la structure du modèle de composants du cours. |
 | `TableProducts` | **Non standard** | Composite : regroupe par catégorie et **fabrique** ses lignes (donnée dérivée calculée au rendu). |
-| `TableCategory` | **Non standard** | Composant « structurel » : il ne connaît qu'un titre de groupe et un nombre d'éléments, jamais un produit. |
+| `TableCategory` | **Non standard** | Composant « structurel » : il ne connaît qu'un titre de groupe et un nombre d'éléments, jamais un produit. C'est aussi le **seul endroit où la catégorie est affichée** pour les produits du groupe : les lignes ne la répètent pas (voir § 4.1). |
 | `KpiCard` | **Non standard** | À facette : `props.children` — la carte fournit le cadre, l'appelant fournit le contenu. |
 | `DataProvider` | **Non standard** | Composant **sans rendu visible** (non visuel) : il n'affiche rien, il fournit un état. |
 | `Layout` | **Non standard** | Gabarit de route parente : il ne sait pas quelle page il encadre (`<Outlet/>`). |
@@ -397,6 +397,7 @@ couples (état, événement) pour prouver qu'aucune transition interdite ne pass
 | « quantité en dessous du seuil » | **`<` strict** — l'énoncé dit « en dessous du seuil », donc un produit dont la quantité est **égale** au seuil n'est pas signalé. Cas limite conservé dans les données : `Orange` (12/12) n'est pas surligné | une seule fonction `isLowStock()` pour toute l'application, et un test dédié au cas limite (unitaire + bout en bout) |
 | valeur du « stock moyen » | moyenne des quantités disponibles, arrondie au dixième | affiché sur la page Accueil |
 | filtre « prix maximum » | curseur dont la position maximale signifie « aucun filtre » | un `Range` ne sait pas représenter une absence de valeur |
+| « attributs affichés : Nom, **Catégorie**, Prix, Quantité, Seuil » | la catégorie est affichée **par la ligne de groupe** (`TableCategory`), pas répétée sur chacune des lignes : le tableau est déjà regroupé par catégorie | les cinq attributs restent affichés, sans doublon : `RowProduct` rend nom, prix, quantité et seuil, et le groupe porte la catégorie |
 
 ### 4.2 Ce qui n'est pas complètement implémenté (et pour quoi on a des idées)
 
@@ -456,7 +457,7 @@ littéralement demandés. Ils sont listés ici, avec leur raison d'être :
 |---|---|---|
 | « Annuler » et « Réinitialiser » (barre de navigation) | conservés | ce sont les démonstrations concrètes de Command et de State, dont l'analyse fait l'objet de la partie 2 |
 | Tri par colonne (Nom, Prix, Quantité) sur Produits | conservé | le sujet demande des **filtres** sur les attributs ; le tri offre une seconde lecture de la même liste, sans rien retirer à la conformité |
-| Regroupement des lignes par catégorie (`TableCategory`) | conservé | choix de présentation, et surtout l'exemple de **composant composite** de la partie 1 |
+| Regroupement des lignes par catégorie (`TableCategory`) | conservé | choix de présentation, et surtout l'exemple de **composant composite** de la partie 1 ; c'est lui qui porte l'affichage de la catégorie, la colonne n'étant pas répétée sur chaque ligne (§ 4.1) |
 | Total de la commande et sous-total par ligne | conservés | un formulaire qui affiche des quantités sans total serait incomplet à l'usage ; la « forme libre » du sujet le permet |
 | Compteur « N produit(s) affiché(s) sur M » | conservé | retour d'information du filtre, sans effet sur les données |
 | `CATEGORIES` (`seed.js`) | conservé, **non utilisé** | liste de référence du catalogue (voir le commentaire du fichier) |
