@@ -163,11 +163,11 @@ code réel des adaptateurs et sa référence dans les sources :
   huit ports vers `ProductsPage`. L'adaptateur est écrit par la page :
   `onSearchChange={changeFilter("search")}`, avec
   `changeFilter = (key) => (value) => setFilters((prev) => ({ ...prev, [key]: value }))`
-  (`ProductsPage.jsx:59`) — c'est le currying qui fixe la clé du filtre, et
+  (`ProductsPage.jsx`, la fonction locale `changeFilter`) — c'est le currying qui fixe la clé du filtre, et
   `ProductFilter` ne fait que transmettre ce port à l'atome concerné ;
 - **chaîne de la page Commande** — `QuantitySelector` remonte un nombre, `OrderRow` le
   transforme en couple `(id, quantité)` avec
-  `(nextQuantity) => onQuantityChange(product.id, nextQuantity)` (`OrderRow.jsx:45`), et
+  `(nextQuantity) => onQuantityChange(product.id, nextQuantity)` (`OrderRow.jsx`, le `onChange` du `QuantitySelector`), et
   `OrderPage` reçoit le tout ;
 - **les deux pages ne se parlent pas** : chacune lit le même état partagé
   (`DataProvider`), et c'est l'état qui rend les deux chaînes solidaires — c'est le point
